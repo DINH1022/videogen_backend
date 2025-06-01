@@ -22,7 +22,7 @@ public class home {
     CloudinaryService cloudinaryService;
 
     @Autowired
-    @Qualifier("groq-AudioService")
+    @Qualifier("cambAI-AudioService")
     private AudioService audioService;
 
 
