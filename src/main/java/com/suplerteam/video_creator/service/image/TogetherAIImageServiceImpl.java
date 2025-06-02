@@ -18,6 +18,7 @@ import java.util.List;
 
 
 @Service
+@Qualifier("togetherAI-ImageService")
 public class TogetherAIImageServiceImpl implements ImageService {
     @Autowired
     @Qualifier("togetherAI-webClient")

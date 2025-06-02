@@ -33,9 +33,32 @@ public class CloudinaryServiceImpl implements CloudinaryService{
             ));
             return uploadResult.get("secure_url").toString();
         }
+        catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
         finally {
             tempFile.delete();
         }
+    }
 
+    @Override
+    public String uploadImage(
+            InputStreamResource resource, String fileName) throws IOException {
+        File tempFile = File.createTempFile(fileName, ".png");
+        try (InputStream inputStream = resource.getInputStream();
+             FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            Map uploadResult = cloudinary.uploader().upload(tempFile, ObjectUtils.asMap(
+                    "resource_type", "image"
+            ));
+            return uploadResult.get("secure_url").toString();
+        }
+        finally {
+            tempFile.delete();
+        }
     }
 }

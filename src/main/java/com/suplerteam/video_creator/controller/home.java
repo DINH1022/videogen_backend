@@ -26,6 +26,7 @@ public class home {
     CloudinaryService cloudinaryService;
 
     @Autowired
+    @Qualifier("clipdrop-ImageService")
     private ImageService imageService;
 
 

@@ -26,6 +26,11 @@ public class WebClientBuilderConfig {
     @Value("${myapp.parameters.togetherAI-secret-key}")
     private String TOGETHER_AI_SECRET_KEY;
 
+    @Value("${myapp.parameters.clipdrop-url}")
+    private String CLIP_DROP_BASE_URL;
+    @Value("${myapp.parameters.clipdrop-secret-key}")
+    private String CLIP_DROP_SECRET_KEY;
+
     @Bean
     @Qualifier("groq-webClient")
     public WebClient.Builder groqWebClientBuilder(){
@@ -52,5 +57,14 @@ public class WebClientBuilderConfig {
                 .baseUrl(TOGETHER_AI_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer "+TOGETHER_AI_SECRET_KEY);
+    }
+
+    @Bean
+    @Qualifier("clipdrop-webClient")
+    public WebClient.Builder clipDropWebClientBuilder(){
+        return WebClient.builder()
+                .baseUrl(CLIP_DROP_BASE_URL)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.ALL_VALUE)
+                .defaultHeader("X-API-KEY",CLIP_DROP_SECRET_KEY);
     }
 }
