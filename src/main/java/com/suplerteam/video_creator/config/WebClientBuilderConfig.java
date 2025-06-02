@@ -21,6 +21,11 @@ public class WebClientBuilderConfig {
     @Value("${myapp.parameters.camb-secret-key}")
     private String CAMB_AI_SECRET_KEY;
 
+    @Value("${myapp.parameters.togetherAI-url}")
+    private String TOGETHER_AI_BASE_URL;
+    @Value("${myapp.parameters.togetherAI-secret-key}")
+    private String TOGETHER_AI_SECRET_KEY;
+
     @Bean
     @Qualifier("groq-webClient")
     public WebClient.Builder groqWebClientBuilder(){
@@ -38,5 +43,14 @@ public class WebClientBuilderConfig {
                 .baseUrl(CAMB_AI_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("x-api-key",CAMB_AI_SECRET_KEY);
+    }
+
+    @Bean
+    @Qualifier("togetherAI-webClient")
+    public WebClient.Builder togetherAIWebClientBuilder(){
+        return WebClient.builder()
+                .baseUrl(TOGETHER_AI_BASE_URL)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer "+TOGETHER_AI_SECRET_KEY);
     }
 }

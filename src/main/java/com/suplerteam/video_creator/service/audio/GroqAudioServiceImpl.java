@@ -14,12 +14,12 @@ public class GroqAudioServiceImpl implements AudioService{
 
     @Autowired
     @Qualifier("groq-webClient")
-    private WebClient.Builder playAiWebClientBuilder;
+    private WebClient.Builder webClientBuilder;
 
     @Override
     public InputStreamResource textToSpeech(TextToSpeechRequest req){
         GroqApiBody playAIApiBody=new GroqApiBody(req.getText(),req.getVoice());
-        return playAiWebClientBuilder.build()
+        return webClientBuilder.build()
                 .post()
                 .bodyValue(playAIApiBody)
                 .retrieve()

@@ -20,7 +20,7 @@ public class CambAIAudioServiceImpl implements AudioService{
 
     @Autowired
     @Qualifier("cambAI-webClient")
-    private WebClient.Builder playAiWebClientBuilder;
+    private WebClient.Builder webClientBuilder;
 
     private final String RELATIVE_URI_CREATE_TASK="/tts";
     private final String RELATIVE_URI_CHECK_TASK_STATUS="/tts";
@@ -37,7 +37,7 @@ public class CambAIAudioServiceImpl implements AudioService{
                 .age(req.getAge()!=null?req.getVoice():CambAIApiBody.DEFAULT_AGE)
                 .build();
 
-        CambAICreateApiResponse createResponse = playAiWebClientBuilder.build()
+        CambAICreateApiResponse createResponse = webClientBuilder.build()
                 .post()
                 .uri(RELATIVE_URI_CREATE_TASK)
                 .bodyValue(cambAIApiBody)
@@ -52,7 +52,7 @@ public class CambAIAudioServiceImpl implements AudioService{
         String runId = null;
         while (true) {
             final String COMPLETED_STATUS="SUCCESS";
-            CambAITaskStatusApiResponse statusResponse = playAiWebClientBuilder.build()
+            CambAITaskStatusApiResponse statusResponse = webClientBuilder.build()
                     .get()
                     .uri(uriBuilder -> uriBuilder
                             .scheme("https")
@@ -76,7 +76,7 @@ public class CambAIAudioServiceImpl implements AudioService{
                 throw new RuntimeException("Thread interrupted", e);
             }
         }
-        byte[] audioBytes = playAiWebClientBuilder.build()
+        byte[] audioBytes = webClientBuilder.build()
                 .get()
                 .uri(RELATIVE_URI_GET_AUDIO_FILE+"/"+runId)
                 .retrieve()
