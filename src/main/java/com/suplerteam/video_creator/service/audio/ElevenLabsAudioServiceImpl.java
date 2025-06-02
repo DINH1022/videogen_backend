@@ -22,7 +22,8 @@ public class ElevenLabsAudioServiceImpl implements AudioService{
     @Value("${myapp.parameters.eleven-labs-key}")
     private String API_KEY;
 
-
+    @Autowired
+    private RestTemplate restTemplate;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -42,7 +43,6 @@ public class ElevenLabsAudioServiceImpl implements AudioService{
         String jsonBody=objectMapper.writeValueAsString(elevenLabsApiBody);
 
         HttpEntity<String> entity=new HttpEntity<>(jsonBody,headers);
-        RestTemplate restTemplate=new RestTemplate();
         ResponseEntity<byte[]> res=restTemplate.exchange(
                 URL, HttpMethod.POST,entity,byte[].class
         );

@@ -1,7 +1,7 @@
 package com.suplerteam.video_creator.controller;
 
 import com.suplerteam.video_creator.request.video.CreateVideoRequest;
-import com.suplerteam.video_creator.request.video.shot_stack.ShotStackApiBody;
+
 import com.suplerteam.video_creator.service.video.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
