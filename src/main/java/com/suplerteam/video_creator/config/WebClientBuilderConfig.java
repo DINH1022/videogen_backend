@@ -31,6 +31,11 @@ public class WebClientBuilderConfig {
     @Value("${myapp.parameters.clipdrop-secret-key}")
     private String CLIP_DROP_SECRET_KEY;
 
+    @Value("${myapp.parameters.shot-stack-url}")
+    private String SHOT_STACK_BASE_URL;
+    @Value("${myapp.parameters.shot-stack-secret-key}")
+    private String SHOT_STACK_SECRET_KEY;
+
     @Bean
     @Qualifier("groq-webClient")
     public WebClient.Builder groqWebClientBuilder(){
@@ -66,5 +71,14 @@ public class WebClientBuilderConfig {
                 .baseUrl(CLIP_DROP_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.ALL_VALUE)
                 .defaultHeader("X-API-KEY",CLIP_DROP_SECRET_KEY);
+    }
+
+    @Bean
+    @Qualifier("shotStack-webClient")
+    public WebClient.Builder shotStackWebClientBuilder(){
+        return WebClient.builder()
+                .baseUrl(SHOT_STACK_BASE_URL)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.ALL_VALUE)
+                .defaultHeader("X-API-KEY",SHOT_STACK_SECRET_KEY);
     }
 }

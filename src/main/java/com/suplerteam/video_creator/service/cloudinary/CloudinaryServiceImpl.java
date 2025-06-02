@@ -61,4 +61,12 @@ public class CloudinaryServiceImpl implements CloudinaryService{
             tempFile.delete();
         }
     }
+
+    @Override
+    public String uploadVideoFromUrl(String url) throws IOException {
+        Map uploadResult = cloudinary.uploader().upload(url, ObjectUtils.asMap(
+                "resource_type", "video"
+        ));
+        return uploadResult.get("secure_url").toString();
+    }
 }
