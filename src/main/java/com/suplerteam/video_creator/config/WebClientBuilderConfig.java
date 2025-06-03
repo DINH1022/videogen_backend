@@ -36,6 +36,15 @@ public class WebClientBuilderConfig {
     @Value("${myapp.parameters.shot-stack-secret-key}")
     private String SHOT_STACK_SECRET_KEY;
 
+    @Value("${myapp.parameters.open-router-url}")
+    private String OPEN_ROUTER_BASE_URL;
+    @Value("${myapp.parameters.open-router-secret-key}")
+    private String OPEN_ROUTER_SECRET_KEY;
+
+    @Value("${myapp.parameters.gemini-url}")
+    private String GEMINI_BASE_URL;
+
+
     @Bean
     @Qualifier("groq-webClient")
     public WebClient.Builder groqWebClientBuilder(){
@@ -80,5 +89,22 @@ public class WebClientBuilderConfig {
                 .baseUrl(SHOT_STACK_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.ALL_VALUE)
                 .defaultHeader("X-API-KEY",SHOT_STACK_SECRET_KEY);
+    }
+
+    @Bean
+    @Qualifier("openRouter-webClient")
+    public WebClient.Builder openRouterWebClientBuilder(){
+        return WebClient.builder()
+                .baseUrl(OPEN_ROUTER_BASE_URL)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer "+OPEN_ROUTER_SECRET_KEY);
+    }
+
+    @Bean
+    @Qualifier("gemini-webClient")
+    public WebClient.Builder geminiWebClientBuilder(){
+        return WebClient.builder()
+                .baseUrl(GEMINI_BASE_URL)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
 }
