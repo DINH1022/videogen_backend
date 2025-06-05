@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -41,4 +42,11 @@ public class User {
 
     @Column(name = "role")
     private String role;
+
+    @OneToOne(cascade = CascadeType.ALL,mappedBy = "user")
+    private SocialAccountConnection socialConnection;
+
+    @OneToMany(cascade = CascadeType.ALL,
+            mappedBy = "user",fetch = FetchType.LAZY)
+    private List<YoutubeUploads> youtubeUploads;
 }

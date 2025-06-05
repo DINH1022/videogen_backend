@@ -8,3 +8,27 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     role VARCHAR(20)
 );
+
+
+CREATE TABLE USER_SOCIAL_TOKEN(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    youtube_token varchar(255)
+);
+
+CREATE TABLE YOUTUBE_UPLOADS(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    video_id varchar(255)
+)
+
+ALTER TABLE USER_SOCIAL_TOKEN
+ADD CONSTRAINT fk_user_tokens
+FOREIGN KEY (user_id)
+REFERENCES users(id);
+
+ALTER TABLE YOUTUBE_UPLOADS
+ADD CONSTRAINT fk_youtube_uploads_user
+FOREIGN KEY (user_id)
+REFERENCES users(id);
+

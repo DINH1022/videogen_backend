@@ -1,6 +1,7 @@
 package com.suplerteam.video_creator.service.user;
 
 import com.suplerteam.video_creator.DTO.UserDTO;
+import com.suplerteam.video_creator.entity.SocialAccountConnection;
 import com.suplerteam.video_creator.entity.User;
 import com.suplerteam.video_creator.exception.CustomBadRequestException;
 import com.suplerteam.video_creator.exception.DuplicateResourceException;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 @Service
@@ -37,12 +39,19 @@ public class UserServiceImpl implements UserService{
                 .fullName(req.getFullName())
                 .username(req.getUsername())
                 .password(hashedPassword)
+                .youtubeUploads(new ArrayList<>())
                 .email("")
                 .avatar("")
                 .role(DEFAULT_ROLE_STRING)
                 .createdAt(new Date())
                 .build();
         var saved=userRepository.save(user);
+        SocialAccountConnection socialAccountConnection=SocialAccountConnection
+                .builder()
+                .user(user)
+                .build();
+        saved.setSocialConnection(socialAccountConnection);
+        userRepository.save(saved);
         return UserDTO.createFromEntity(user);
     }
 
