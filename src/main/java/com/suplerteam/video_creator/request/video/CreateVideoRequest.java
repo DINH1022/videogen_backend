@@ -17,4 +17,6 @@ public class CreateVideoRequest {
     private List<VideoImageSegment> imageSegments;
     @JsonProperty("audio")
     private String audioUrl;
+    @JsonProperty("title")
+    private String title;
 }

@@ -5,5 +5,5 @@ import com.suplerteam.video_creator.request.video.CreateVideoRequest;
 import java.io.IOException;
 
 public interface VideoService {
-    String createVideo(CreateVideoRequest req) throws InterruptedException, IOException;
+    String createVideo(CreateVideoRequest req, String username) throws InterruptedException, IOException;
 }

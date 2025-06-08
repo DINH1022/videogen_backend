@@ -4,6 +4,8 @@ import com.suplerteam.video_creator.request.auth.LoginRequest;
 import com.suplerteam.video_creator.request.auth.RegisterRequest;
 import com.suplerteam.video_creator.service.JWTService;
 import com.suplerteam.video_creator.service.user.UserService;
+import com.suplerteam.video_creator.entity.User;
+import com.suplerteam.video_creator.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -12,6 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -25,6 +30,8 @@ public class AuthenticationController {
     private UserDetailsService userDetailsService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(
@@ -43,7 +50,16 @@ public class AuthenticationController {
                 )
         );
         UserDetails userDetails=userDetailsService.loadUserByUsername(authentication.getName());
-        String jwtToken=jwtService.generateToken(null,userDetails);
+        
+        // Get additional user info to include in token
+        User user = userRepository.findByUsername(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Create claims with user ID and any other necessary data
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("userId", user.getId());
+        
+        String jwtToken = jwtService.generateToken(extraClaims, userDetails);
         return ResponseEntity.ok(jwtToken);
     }
 }

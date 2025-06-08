@@ -22,6 +22,19 @@ CREATE TABLE YOUTUBE_UPLOADS(
     video_id varchar(255)
 )
 
+CREATE TABLE USER_VIDEO(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    video_url varchar(255),
+    title VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE USER_VIDEO
+ADD CONSTRAINT fk_user_id
+FOREIGN KEY (user_id)
+REFERENCES users(id);
+
 ALTER TABLE USER_SOCIAL_TOKEN
 ADD CONSTRAINT fk_user_tokens
 FOREIGN KEY (user_id)

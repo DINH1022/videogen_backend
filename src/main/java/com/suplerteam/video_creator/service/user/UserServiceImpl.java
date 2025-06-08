@@ -40,7 +40,7 @@ public class UserServiceImpl implements UserService{
                 .username(req.getUsername())
                 .password(hashedPassword)
                 .youtubeUploads(new ArrayList<>())
-                .email("")
+                .email(req.getEmail())
                 .avatar("")
                 .role(DEFAULT_ROLE_STRING)
                 .createdAt(new Date())

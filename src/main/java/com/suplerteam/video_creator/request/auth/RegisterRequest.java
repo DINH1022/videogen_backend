@@ -15,6 +15,8 @@ public class RegisterRequest {
     private String fullName;
     @JsonProperty("username")
     private String username;
+    @JsonProperty("email")
+    private String email;
     @JsonProperty("password")
     private String password;
     @JsonProperty("confirm_password")

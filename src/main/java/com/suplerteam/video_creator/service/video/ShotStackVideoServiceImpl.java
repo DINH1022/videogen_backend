@@ -1,5 +1,10 @@
 package com.suplerteam.video_creator.service.video;
 
+import com.suplerteam.video_creator.entity.User;
+import com.suplerteam.video_creator.entity.UserVideo;
+import com.suplerteam.video_creator.exception.ResourceNotFoundException;
+import com.suplerteam.video_creator.repository.UserRepository;
+import com.suplerteam.video_creator.repository.UserVideoRespository;
 import com.suplerteam.video_creator.request.video.CreateVideoRequest;
 import com.suplerteam.video_creator.request.video.shot_stack.ShotStackApiBody;
 import com.suplerteam.video_creator.response.shot_stack.create.ShotStackSuccessApiResponse;
@@ -11,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.time.Instant;
 
 @Service
 public class ShotStackVideoServiceImpl implements VideoService{
@@ -20,14 +27,24 @@ public class ShotStackVideoServiceImpl implements VideoService{
 
     @Autowired
     private CloudinaryService cloudinaryService;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private UserVideoRespository userVideoRepository;
 
     private Boolean isVideoCreated(ShotStackRenderStatusApiResponse res){
         return res.getSuccess().equals(true)
                 && res.getMessage().equalsIgnoreCase("ok")
                 && res.getResponse().getStatus().equalsIgnoreCase("done");
     }
+    
     @Override
-    public String createVideo(CreateVideoRequest req) throws InterruptedException, IOException {
+    public String createVideo(CreateVideoRequest req, String username) throws InterruptedException, IOException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
+
         final int SLEEP_TIME=2000;
         ShotStackApiBody body=ShotStackApiBody.createFromCreateVideoRequest(req);
 
@@ -56,6 +73,16 @@ public class ShotStackVideoServiceImpl implements VideoService{
             Thread.sleep(SLEEP_TIME);
         }
         url=cloudinaryService.uploadVideoFromUrl(url);
+        
+        UserVideo userVideo = UserVideo.builder()
+                .video_url(url)
+                .user(user)
+                .title(req.getTitle())
+                .createdAt(new Date(Instant.now().toEpochMilli())) // Changed from created_at to createdAt
+                .build();
+                
+        userVideoRepository.save(userVideo);
+        
         return url;
     }
 }

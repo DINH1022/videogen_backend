@@ -20,53 +20,57 @@ public class JWTService {
     @Value("${myapp.jwt.secret}")
     private String SECRET_KEY;
 
+    // Token expiration time (24 hours in milliseconds)
+    private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000;
+
     public String extractUsername(String token){
-        return extractClaim(token,Claims::getSubject);
+        return extractClaim(token, Claims::getSubject);
     }
 
     public Date extractExpirationTime(String token){
-        return extractClaim(token,Claims::getExpiration);
+        return extractClaim(token, Claims::getExpiration);
     }
 
-    private  <T> T extractClaim(String token, Function<Claims,T> claimsResolver){
-        final Claims claims=extractAllClaims(token);
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver){
+        final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
     private Key getSigningKey(){
-        byte[] keyBytes= Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(
-            Map<String,String> extraClaims,
+            Map<String, Object> extraClaims,
             UserDetails userDetails){
-        if(extraClaims==null){
-            extraClaims=new HashMap<>();
+        if(extraClaims == null){
+            extraClaims = new HashMap<>();
         }
-        Long currentTimeInMilisecond=System.currentTimeMillis();
-        Long EXPIRATION_TIME_IN_MILISECOND=1L;
+        long currentTimeMillis = System.currentTimeMillis();
+        
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(currentTimeInMilisecond))
-                .setExpiration(new Date((currentTimeInMilisecond+EXPIRATION_TIME_IN_MILISECOND)))
+                .setIssuedAt(new Date(currentTimeMillis))
+                .setExpiration(new Date(currentTimeMillis + EXPIRATION_TIME))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean isTokenExpired(String token){
-        Date currentTime=new Date();
-        Date expiredTime=extractExpirationTime(token);
-        return !currentTime.before(expiredTime);
+        try {
+            Date expiration = extractExpirationTime(token);
+            return expiration.before(new Date());
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails){
-        if(isTokenExpired(token)){
-            return false;
-        }
-        return true;
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     public Claims extractAllClaims(String token){
