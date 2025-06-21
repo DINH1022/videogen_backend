@@ -1,6 +1,8 @@
 package com.suplerteam.video_creator.service;
 
+import com.suplerteam.video_creator.response.token.TokenInformation;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -80,5 +82,15 @@ public class JWTService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public TokenInformation getTokenInformation(String token){
+        Claims claims=extractAllClaims(token);
+        return TokenInformation.builder()
+                .userId(Long.parseLong(claims.get("userId").toString()))
+                .user(claims.getSubject())
+                .iat(claims.getIssuedAt())
+                .exp(claims.getExpiration())
+                .build();
     }
 }
