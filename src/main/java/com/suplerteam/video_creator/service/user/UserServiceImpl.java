@@ -55,4 +55,11 @@ public class UserServiceImpl implements UserService{
         return UserDTO.createFromEntity(user);
     }
 
+    @Override
+    public UserDTO getProfile(String username) {
+        User user=userRepository.findByUsername(username)
+                .orElseThrow(()->new ResourceNotFoundException("Not found user"));
+        return UserDTO.createFromEntity(user);
+    }
+
 }
