@@ -22,6 +22,9 @@ public class SocialAccountConnection {
     @Column(name = "youtube_token")
     private String youtubeToken;
 
+    @Column(name = "tiktok_token")
+    private String tiktokToken;
+
     @OneToOne
     @JoinColumn(name = "user_id",referencedColumnName = "id")
     private User user;

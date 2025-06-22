@@ -27,7 +27,8 @@ public class SecurityConfig {
                 .csrf(csrf->csrf.disable())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests->
-                        requests.requestMatchers("/auth/**","/token/**").permitAll()
+                        requests.requestMatchers("/auth/**","/token/**","/connect/tiktok-callback",
+                                        "/connect/youtube-callback").permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

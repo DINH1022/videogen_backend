@@ -13,7 +13,8 @@ CREATE TABLE users (
 CREATE TABLE USER_SOCIAL_TOKEN(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    youtube_token varchar(255)
+    youtube_token varchar(255),
+    tiktok_token varchar(255)
 );
 
 CREATE TABLE YOUTUBE_UPLOADS(

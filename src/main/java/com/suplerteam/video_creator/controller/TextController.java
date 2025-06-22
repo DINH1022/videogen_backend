@@ -17,7 +17,7 @@ import java.io.IOException;
 public class TextController {
 
     @Autowired
-    @Qualifier("DeepSeek-TextService")
+    @Qualifier("Gemini-TextService")
     private TextAIService textAIService;
 
 

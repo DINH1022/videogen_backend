@@ -1,7 +1,7 @@
 package com.suplerteam.video_creator.service.upload_social;
 
+import com.suplerteam.video_creator.entity.TiktokUploads;
 import com.suplerteam.video_creator.entity.User;
-import com.suplerteam.video_creator.entity.YoutubeUploads;
 import com.suplerteam.video_creator.exception.ResourceNotFoundException;
 import com.suplerteam.video_creator.repository.UserRepository;
 import com.suplerteam.video_creator.request.social_video_upload.SocialVideoUploadRequest;
@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Qualifier("YoutubeUploadServiceImpl")
-public class YoutubeUploadServiceImpl implements VideoUploadService{
+@Qualifier("TiktokUploadServiceImpl")
+public class TiktokUploadServiceImpl implements VideoUploadService {
 
     @Autowired
-    @Qualifier("youtube-uploader-Service")
+    @Qualifier("tiktok-uploader-Service")
     private VideoUploaderClient videoUploaderClient;
 
     @Autowired
@@ -25,15 +25,18 @@ public class YoutubeUploadServiceImpl implements VideoUploadService{
     @Override
     @Transactional
     public Boolean upload(SocialVideoUploadRequest req) {
-        User user=userRepository.findByUsername(req.getUsername())
-                .orElseThrow(()->new ResourceNotFoundException("Not found user"));
-        String videoId=videoUploaderClient.uploadVideo(req);
-        YoutubeUploads newUpload=YoutubeUploads
+        User user = userRepository.findByUsername(req.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("Not found user"));
+
+        String videoId = videoUploaderClient.uploadVideo(req);
+
+        TiktokUploads newUpload = TiktokUploads
                 .builder()
                 .user(user)
                 .videoId(videoId)
                 .build();
-        user.getYoutubeUploads().add(newUpload);
+
+        user.getTiktokUploads().add(newUpload);
         return true;
     }
 }

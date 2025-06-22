@@ -49,4 +49,7 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL,
             mappedBy = "user",fetch = FetchType.LAZY)
     private List<YoutubeUploads> youtubeUploads;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TiktokUploads> tiktokUploads;
 }

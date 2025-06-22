@@ -16,7 +16,7 @@ import java.util.List;
 public class ImageController {
 
     @Autowired
-    @Qualifier("gemini-ImageService")
+    @Qualifier("clipdrop-ImageService")
     private ImageService imageService;
 
     @PostMapping("/generate")

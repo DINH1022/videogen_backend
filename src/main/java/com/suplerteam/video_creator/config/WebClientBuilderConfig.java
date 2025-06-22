@@ -107,4 +107,12 @@ public class WebClientBuilderConfig {
                 .baseUrl(GEMINI_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
+
+    @Bean
+    @Qualifier("tiktok-webClient")
+    public WebClient.Builder tiktokWebClientBuilder(){
+        return WebClient.builder()
+                .baseUrl("https://open.tiktokapis.com/v2/")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+    }
 }
