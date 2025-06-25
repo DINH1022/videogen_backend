@@ -52,17 +52,6 @@ public class ConnectSocialAccountController {
                 .build();
     }
 
-//    @GetMapping("/tiktok-callback")
-//    public ResponseEntity<Void> tiktokCallback(
-//            @RequestParam("code")String code,
-//            @RequestParam("state")Long userId) {
-//        tiktokConnectionService.connectToSocialAccount(userId,code);
-//        //tech-debt: replace by real front-end url
-//        return ResponseEntity.status(HttpStatus.FOUND)
-//                .location(URI.create("https://ee9e-14-186-85-147.ngrok-free.app"))
-//                .build();
-//    }
-
     @GetMapping("/tiktok-callback")
     public ResponseEntity<Void> tiktokCallback(
             @RequestParam(value = "code", required = false) String code,
@@ -71,10 +60,9 @@ public class ConnectSocialAccountController {
             @RequestParam(value = "error_description", required = false) String errorDescription) {
 
         if (error != null) {
-            // Log the error from TikTok
             log.error("TikTok OAuth error: {} - {}", error, errorDescription);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("https://ee9e-14-186-85-147.ngrok-free.app/error?message=" + errorDescription))
+                    .location(URI.create("http://localhost:8080/error?message=" + errorDescription))
                     .build();
         }
 
@@ -88,12 +76,12 @@ public class ConnectSocialAccountController {
         } catch (Exception e) {
             log.error("Error processing TikTok callback", e);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("https://ee9e-14-186-85-147.ngrok-free.app/error?message=Connection+failed"))
+                    .location(URI.create("http://localhost:8080/error?message=Connection+failed"))
                     .build();
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("https://ee9e-14-186-85-147.ngrok-free.app/success"))
+                .location(URI.create("http://localhost:8080/success"))
                 .build();
     }
 

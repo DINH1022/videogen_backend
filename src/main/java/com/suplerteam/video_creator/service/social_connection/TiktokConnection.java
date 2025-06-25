@@ -5,37 +5,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suplerteam.video_creator.entity.User;
 import com.suplerteam.video_creator.exception.ResourceNotFoundException;
 import com.suplerteam.video_creator.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
-
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Qualifier("TiktokConnection-Service")
 public class TiktokConnection implements SocialConnectionService {
-
     private static final Logger log = LoggerFactory.getLogger(TiktokConnection.class);
 
     @Value("${myapp.parameters.tiktok-client-key}")
@@ -46,10 +39,10 @@ public class TiktokConnection implements SocialConnectionService {
 
     private final String TIKTOK_AUTH_URL = "https://www.tiktok.com/v2/auth/authorize/";
     private final String TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
-    private final String TIKTOK_OAUTH_CALLBACK_URL = "https://ee9e-14-186-85-147.ngrok-free.app/connect/tiktok-callback";
+    private final String TIKTOK_REDIRECT_URI = "http://localhost:8080/connect/tiktok-callback";
 
-    // Store code verifiers for each user session
-    private final Map<String, String> codeVerifiers = new HashMap<>();
+    // Store PKCE code verifiers by user ID
+    private final Map<Long, String> codeVerifiers = new ConcurrentHashMap<>();
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -57,116 +50,164 @@ public class TiktokConnection implements SocialConnectionService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    @Qualifier("tiktok-webClient")
+    private WebClient.Builder tiktokAuthWebClientBuilder;
+
+    @Override
+    public String getAuthURL(Long userId) {
+        log.info("Generating TikTok auth URL for user ID: {}", userId);
+
+        // Generate code verifier - direct random string using only allowed characters
+        String codeVerifier = generateCodeVerifier();
+        codeVerifiers.put(userId, codeVerifier);
+        log.info("Generated code verifier: {}", codeVerifier);
+
+        // Generate code challenge by SHA-256 hashing the verifier
+        String codeChallenge = generateCodeChallenge(codeVerifier);
+        log.info("Generated code challenge: {}", codeChallenge);
+
+        // Build authorization URL
+        String authUrl = UriComponentsBuilder.fromUriString(TIKTOK_AUTH_URL)
+                .queryParam("client_key", TIKTOK_CLIENT_KEY)
+                .queryParam("response_type", "code")
+                .queryParam("scope", "user.info.basic,video.upload,video.publish")
+                .queryParam("redirect_uri", TIKTOK_REDIRECT_URI)
+                .queryParam("state", userId)
+                .queryParam("code_challenge", codeChallenge)
+                .queryParam("code_challenge_method", "S256")
+                .build()
+                .toUriString();
+
+        log.info("Generated TikTok auth URL: {}", authUrl);
+        return authUrl;
+    }
 
     private String generateCodeVerifier() {
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] codeVerifier = new byte[32];
-        secureRandom.nextBytes(codeVerifier);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(codeVerifier);
+        // Generate a code verifier using only allowed characters: [A-Z] [a-z] [0-9] - . _ ~
+        SecureRandom random = new SecureRandom();
+        String allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+        // Length between 43-128 chars (using 64 as a good length)
+        int length = 64;
+        StringBuilder codeVerifier = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            codeVerifier.append(allowedChars.charAt(random.nextInt(allowedChars.length())));
+        }
+
+        return codeVerifier.toString();
     }
 
 
     private String generateCodeChallenge(String codeVerifier) {
         try {
+            // SHA-256 hash the code_verifier
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(codeVerifier.getBytes(StandardCharsets.UTF_8));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Failed to generate code challenge", e);
-        }
-    }
 
-    @Override
-    public String getAuthURL(Long userId) {
-        String csrfState = userId.toString();
-
-        String codeVerifier = generateCodeVerifier();
-        String codeChallenge = generateCodeChallenge(codeVerifier);
-
-        codeVerifiers.put(csrfState, codeVerifier);
-
-        String tiktok_url = UriComponentsBuilder
-                .fromHttpUrl(TIKTOK_AUTH_URL)
-                .queryParam("client_key", TIKTOK_CLIENT_KEY)
-                .queryParam("scope", "user.info.basic,video.upload,video.publish")
-                .queryParam("response_type", "code")
-                .queryParam("redirect_uri", TIKTOK_OAUTH_CALLBACK_URL)
-                .queryParam("state", csrfState)
-                .queryParam("code_challenge", codeChallenge)
-                .queryParam("code_challenge_method", "S256")
-                .build(true) // true enables encoding
-                .toUriString();
-        log.info("Generated TikTok auth URL: {}", tiktok_url);
-        return tiktok_url;
-    }
-
-    @Override
-    public String getRefreshTokenByAuthCode(String code) {
-        try {
-            // Extract state from the controller's request parameters to get code verifier
-            String state = null;
-            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-            if (request.getParameter("state") != null) {
-                state = request.getParameter("state");
+            // Convert to hexadecimal string
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
             }
-
-            String codeVerifier = codeVerifiers.get(state);
-            if (codeVerifier == null) {
-                throw new RuntimeException("Code verifier not found for state: " + state);
-            }
-
-            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("client_key", TIKTOK_CLIENT_KEY);
-            formData.add("client_secret", TIKTOK_CLIENT_SECRET);
-            formData.add("code", code);
-            formData.add("grant_type", "authorization_code");
-            formData.add("redirect_uri", TIKTOK_OAUTH_CALLBACK_URL);
-            formData.add("code_verifier", codeVerifier);
-
-            // Clean up after use
-            codeVerifiers.remove(state);
-
-            String response = WebClient.builder()
-                    .baseUrl(TIKTOK_TOKEN_URL)
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                    .build()
-                    .post()
-                    .bodyValue(formData)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            log.info("TikTok token response: {}", response);
-            JsonNode jsonNode = objectMapper.readTree(response);
-
-            // Check if response directly contains refresh_token (no data wrapper)
-            if (jsonNode.has("refresh_token")) {
-                return jsonNode.path("refresh_token").asText();
-            } else if (jsonNode.has("data") && jsonNode.get("data").has("refresh_token")) {
-                // Fallback to check if response has data wrapper
-                return jsonNode.path("data").path("refresh_token").asText();
-            } else {
-                log.error("Unexpected TikTok response format: {}", response);
-                return null;
-            }
+            return hexString.toString();
         } catch (Exception e) {
-            log.error("Failed to exchange TikTok authorization code", e);
-            throw new RuntimeException("Failed to exchange TikTok authorization code: " + e.getMessage(), e);
+            log.error("Error generating code challenge", e);
+            throw new RuntimeException("Failed to generate code challenge", e);
         }
     }
 
     @Transactional
     @Override
     public Boolean connectToSocialAccount(Long userId, String authorizationCode) {
-        String refreshToken = getRefreshTokenByAuthCode(authorizationCode);
-        if (refreshToken == null || refreshToken.isEmpty()) {
+        log.info("Connecting TikTok account for user ID: {}", userId);
+
+        // Get user's code verifier - use remove to get and delete in one operation
+        String codeVerifier = codeVerifiers.remove(userId);
+        if (codeVerifier == null) {
+            log.error("No code verifier found for user ID: {}", userId);
             return false;
         }
+        log.info("Retrieved code verifier for token exchange: {}", codeVerifier);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found user"));
-        user.getSocialConnection().setTiktokToken(refreshToken);
-        userRepository.save(user);
-        return true;
+        try {
+            String accessToken = exchangeCodeForToken(authorizationCode, codeVerifier);
+            if (accessToken == null || accessToken.isEmpty()) {
+                log.error("Failed to obtain access token from TikTok");
+                return false;
+            }
+
+            // Store the token with the user
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            user.getSocialConnection().setTiktokToken(accessToken);
+            userRepository.save(user);
+
+            log.info("Successfully saved TikTok token for user ID: {}", userId);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error connecting TikTok account: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    private String exchangeCodeForToken(String authorizationCode, String codeVerifier) {
+        log.info("Exchanging authorization code for token");
+        try {
+            // Create form data for the token exchange
+            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+            formData.add("client_key", TIKTOK_CLIENT_KEY);
+            formData.add("client_secret", TIKTOK_CLIENT_SECRET);
+            formData.add("code", authorizationCode);
+            formData.add("grant_type", "authorization_code");
+            formData.add("code_verifier", codeVerifier);
+            formData.add("redirect_uri", TIKTOK_REDIRECT_URI);
+
+            log.info("Sending token request to TikTok with payload: {}", formData);
+
+            // Send request to TikTok token endpoint
+            String response = tiktokAuthWebClientBuilder.build()
+                    .post()
+                    .uri(TIKTOK_TOKEN_URL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(formData))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            log.info("TikTok token response: {}", response);
+            JsonNode jsonResponse = objectMapper.readTree(response);
+
+            // Check for errors
+            if (jsonResponse.has("error") && !jsonResponse.path("error").isNull()) {
+                String errorCode = jsonResponse.path("error").path("code").asText();
+                String errorMsg = jsonResponse.path("error").path("message").asText();
+                log.error("TikTok API error: {} - {}", errorCode, errorMsg);
+                return null;
+            }
+
+            // Extract and return the access token
+            if (jsonResponse.has("access_token")) {
+                return jsonResponse.path("access_token").asText();
+            } else if (jsonResponse.has("data") && jsonResponse.path("data").has("access_token")) {
+                return jsonResponse.path("data").path("access_token").asText();
+            } else {
+                log.error("No access token found in response: {}", response);
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("Error exchanging code for token", e);
+            throw new RuntimeException("Failed to exchange code for token", e);
+        }
+    }
+
+    @Override
+    public String getRefreshTokenByAuthCode(String authorizationCode) {
+        throw new UnsupportedOperationException("Not implemented for TikTok");
     }
 }
