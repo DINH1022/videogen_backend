@@ -8,7 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -51,5 +53,5 @@ public class User {
     private List<YoutubeUploads> youtubeUploads;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TiktokUploads> tiktokUploads;
+    private Set<TiktokUploads> tiktokUploads = new HashSet<>();
 }

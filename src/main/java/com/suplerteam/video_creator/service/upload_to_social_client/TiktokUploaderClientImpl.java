@@ -10,215 +10,151 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
 @Qualifier("tiktok-uploader-Service")
 public class TiktokUploaderClientImpl implements VideoUploaderClient {
-    private static final Logger log = LoggerFactory.getLogger(TiktokUploaderClientImpl.class);
-
-    private final String INIT_UPLOAD_URL = "https://open.tiktokapis.com/v2/post/publish/inbox/video/init/";
-    private final String PUBLISH_URL = "https://open.tiktokapis.com/v2/post/publish/inbox/video/";
+    private static final Logger logger = LoggerFactory.getLogger(TiktokUploaderClientImpl.class);
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    @Qualifier("tiktok-webClient")
     private WebClient.Builder tiktokWebClientBuilder;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    // Add filter functions for detailed request/response logging
-    private ExchangeFilterFunction logRequest() {
-        return ExchangeFilterFunction.ofRequestProcessor(clientRequest -> {
-            log.info("Request: {} {}", clientRequest.method(), clientRequest.url());
-            clientRequest.headers().forEach((name, values) ->
-                    values.forEach(value -> log.info("{}={}", name, value)));
-            return Mono.just(clientRequest);
-        });
-    }
-
-    private ExchangeFilterFunction logResponse() {
-        return ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
-            log.info("Response status: {}", clientResponse.statusCode());
-            return clientResponse.bodyToMono(String.class)
-                    .doOnNext(body -> log.info("Response body: {}", body))
-                    .map(body -> clientResponse);
-        });
-    }
-
-    private String getAccessTokenByUsername(String username) {
-        log.info("Getting TikTok access token for user: {}", username);
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
-
-        String refreshToken = user.getSocialConnection().getTiktokToken();
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            log.error("No TikTok refresh token found for user: {}", username);
-            throw new ResourceNotFoundException("TikTok connection not established for user: " + username);
-        }
-
-        log.info("Found TikTok refresh token for user: {}", username);
-        // For now, using refresh token directly as access token for testing
-        return refreshToken;
-    }
-
     @Override
     public String uploadVideo(SocialVideoUploadRequest req) {
+        String username = req.getUsername();
+        logger.info("Getting TikTok access token for user: {}", username);
+
+        String accessToken = getTiktokAccessToken(username);
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new ResourceNotFoundException("TikTok access token not found for user: " + username);
+        }
+
+        logger.info("Found TikTok access token for user: {}", username);
+        logger.info("Starting TikTok video upload process for user: {}", username);
+
         try {
-            String accessToken = getAccessTokenByUsername(req.getUsername());
-            log.info("Starting TikTok video upload process for user: {}", req.getUsername());
+            // Step 1: Download video
+            logger.info("Downloading video from URL: {}", req.getUrl());
+            byte[] videoBytes = downloadVideo(req.getUrl());
+            logger.info("Video downloaded successfully, size: {} bytes", videoBytes.length);
 
-            // Step 1: Download the video from URL
-            log.info("Downloading video from URL: {}", req.getUrl());
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest downloadRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(req.getUrl()))
-                    .build();
+            // Step 2: Init direct upload
+            JsonNode initResponse = initializeDirectUpload(accessToken, videoBytes.length);
+            String publishId = initResponse.path("data").path("publish_id").asText();
+            String uploadUrl = initResponse.path("data").path("upload_url").asText();
+            logger.info("Upload initialized with publish ID: {}", publishId);
 
-            HttpResponse<byte[]> downloadResponse = client.send(downloadRequest, HttpResponse.BodyHandlers.ofByteArray());
-            byte[] videoData = downloadResponse.body();
-            log.info("Video downloaded successfully, size: {} bytes", videoData.length);
+            // Step 3: Upload video
+            uploadVideoToUrl(uploadUrl, videoBytes);
+            logger.info("Video uploaded to TikTok successfully");
 
-            // Step 2: Initialize upload with the TikTok API
-            WebClient webClient = tiktokWebClientBuilder
-                    .filter(logRequest())
-                    .filter(logResponse())
-                    .build();
+            return "Video uploaded to TikTok successfully";
 
-            // Create correctly formatted request body for TikTok API
-            Map<String, Object> postInfo = new HashMap<>();
-            postInfo.put("title", req.getTitle() != null ? req.getTitle() : "");
-
-            if (req.getDescription() != null && !req.getDescription().isEmpty()) {
-                postInfo.put("description", req.getDescription());
-            }
-
-            postInfo.put("privacy_level", req.getPrivacyLevel() != null ? req.getPrivacyLevel() : "PUBLIC");
-            postInfo.put("disable_comment", false);
-            postInfo.put("disable_duet", false);
-            postInfo.put("disable_stitch", false);
-
-            Map<String, Object> initBody = new HashMap<>();
-            initBody.put("post_info", postInfo);
-
-            log.info("Initializing TikTok upload with endpoint: {}", INIT_UPLOAD_URL);
-            log.info("Init request payload: {}", objectMapper.writeValueAsString(initBody));
-            log.info("Using authorization token: Bearer {}", accessToken);
-
-            String initResponse;
-            try {
-                initResponse = webClient
-                        .post()
-                        .uri(INIT_UPLOAD_URL)
-                        .header("Authorization", "Bearer " + accessToken)
-                        .header("Content-Type", "application/json")
-                        .bodyValue(initBody)
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .block();
-
-                log.info("TikTok init upload complete response: {}", initResponse);
-            } catch (Exception e) {
-                log.error("Error during init upload request", e);
-                throw new RuntimeException("Failed during TikTok initialization: " + e.getMessage(), e);
-            }
-
-            JsonNode initJson = objectMapper.readTree(initResponse);
-
-            // Detailed error checking
-            if (initJson.has("error") && !initJson.path("error").isNull()) {
-                String errorCode = initJson.path("error").path("code").asText();
-                String errorMessage = initJson.path("error").path("message").asText();
-                log.error("TikTok API error: {} - {}", errorCode, errorMessage);
-                throw new RuntimeException("TikTok API error: " + errorCode + " - " + errorMessage);
-            }
-
-            // Extract upload parameters
-            String uploadId = initJson.path("data").path("upload_id").asText();
-            String uploadUrl = initJson.path("data").path("upload_url").asText();
-
-            log.info("Received upload_id: {}", uploadId);
-            log.info("Received upload_url: {}", uploadUrl);
-
-            if (uploadId == null || uploadId.isEmpty() || uploadUrl == null || uploadUrl.isEmpty()) {
-                log.error("Failed to get valid upload details from TikTok: {}", initResponse);
-                throw new RuntimeException("Failed to get valid upload details from TikTok");
-            }
-
-            // Step 3: Upload video content directly to the provided upload URL
-            log.info("Uploading video content to URL: {}", uploadUrl);
-            HttpRequest uploadRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(uploadUrl))
-                    .header("Content-Type", "application/octet-stream")
-                    .PUT(HttpRequest.BodyPublishers.ofByteArray(videoData))
-                    .build();
-
-            HttpResponse<String> uploadResponse = client.send(uploadRequest, HttpResponse.BodyHandlers.ofString());
-            log.info("Upload response status: {}", uploadResponse.statusCode());
-            log.info("Upload response body: {}", uploadResponse.body());
-
-            if (uploadResponse.statusCode() != 200) {
-                log.error("Failed to upload video content: {} {}", uploadResponse.statusCode(), uploadResponse.body());
-                throw new RuntimeException("Failed to upload video content: " + uploadResponse.body());
-            }
-            log.info("Video content upload successful");
-
-            // Step 4: Publish the video with the new endpoint
-            Map<String, Object> publishBody = new HashMap<>();
-            publishBody.put("upload_id", uploadId);
-
-            log.info("Publishing video with upload_id: {}", uploadId);
-            log.info("Publish request payload: {}", objectMapper.writeValueAsString(publishBody));
-
-            String publishResponse;
-            try {
-                publishResponse = webClient
-                        .post()
-                        .uri(PUBLISH_URL)
-                        .header("Authorization", "Bearer " + accessToken)
-                        .header("Content-Type", "application/json")
-                        .bodyValue(publishBody)
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .block();
-
-                log.info("TikTok publish complete response: {}", publishResponse);
-            } catch (Exception e) {
-                log.error("Error during video publish request", e);
-                throw new RuntimeException("Failed during TikTok publish: " + e.getMessage(), e);
-            }
-
-            JsonNode publishJson = objectMapper.readTree(publishResponse);
-
-            // Check for error in publish response
-            if (publishJson.has("error") && !publishJson.path("error").isNull()) {
-                String errorCode = publishJson.path("error").path("code").asText();
-                String errorMessage = publishJson.path("error").path("message").asText();
-                log.error("TikTok API publish error: {} - {}", errorCode, errorMessage);
-                throw new RuntimeException("TikTok API publish error: " + errorCode + " - " + errorMessage);
-            }
-
-            String videoId = publishJson.path("data").path("video_id").asText();
-            log.info("Successfully uploaded video to TikTok with ID: {}", videoId);
-            return videoId;
-
-        } catch (IOException | InterruptedException e) {
-            log.error("Failed to upload video to TikTok", e);
+        } catch (Exception e) {
+            logger.error("Error uploading video to TikTok: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to upload video to TikTok: " + e.getMessage(), e);
         }
     }
-}
+
+
+    private String getTiktokAccessToken(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+        return user.getSocialConnection().getTiktokToken();
+    }
+
+    private byte[] downloadVideo(String videoUrl) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(videoUrl))
+                .build();
+
+        HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        InputStream is = response.body();
+        byte[] data = new byte[16384];
+        int bytesRead;
+        while ((bytesRead = is.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, bytesRead);
+        }
+        is.close();
+
+        return buffer.toByteArray();
+    }
+
+    private JsonNode initializeDirectUpload(String accessToken, int videoSize) {
+        logger.info("Initializing TikTok direct upload");
+
+        String payload = String.format("{" +
+                "\"source_info\": {" +
+                "\"source\": \"FILE_UPLOAD\"," +
+                "\"video_size\": %d," +
+                "\"chunk_size\": %d," +
+                "\"total_chunk_count\": 1" +
+                "}}", videoSize, videoSize);
+
+        String response = tiktokWebClientBuilder.build()
+                .post()
+                .uri("https://open.tiktokapis.com/v2/post/publish/inbox/video/init/")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(payload)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        logger.info("Init response: {}", response);
+
+        try {
+            return objectMapper.readTree(response);
+        } catch (Exception e) {
+            logger.error("Error parsing init response", e);
+            throw new RuntimeException("Failed to parse init response", e);
+        }
+    }
+
+    private void uploadVideoToUrl(String uploadUrl, byte[] videoData) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(uploadUrl))
+                .header("Content-Type", "video/mp4")
+                .header("Content-Range", "bytes 0-" + (videoData.length - 1) + "/" + videoData.length)
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(videoData))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200 && response.statusCode() != 201) {
+            logger.error("Failed to upload video to URL. Status: {}, Body: {}", response.statusCode(), response.body());
+            throw new RuntimeException("Failed to upload video. Status: " + response.statusCode());
+        }
+    }
+
+
+    }
+
+
+
