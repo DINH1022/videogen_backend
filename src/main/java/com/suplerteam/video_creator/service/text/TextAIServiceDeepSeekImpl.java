@@ -44,12 +44,13 @@ public class TextAIServiceDeepSeekImpl implements TextAIService{
                     .bodyToMono(String.class)
                     .block();
             JsonNode jsonNode = objectMapper.readTree(response);
-            return jsonNode
+            String genText = jsonNode
                     .path("choices")
                     .get(0)
                     .path("message")
                     .path("content")
                     .asText();
+            return PromptBuilder.removeQuotationMarks(genText);
         }
         catch (Exception e){
             throw new RuntimeException(e.getMessage());

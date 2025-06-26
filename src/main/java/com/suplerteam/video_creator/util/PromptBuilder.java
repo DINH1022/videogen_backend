@@ -16,12 +16,12 @@ public class PromptBuilder {
         }
     }
     private static String buildShortScriptPrompt(GenerateTextRequest request) {
-        return "Create 1 story (about 3-4 sentences, only show me content) about: " + request.getPrompt();
+        return "Create 1 story (about 3-4 sentences, only show me content, do not include any quotation marks) about: " + request.getPrompt();
     }
 
     private static String buildLongScriptPrompt(GenerateTextRequest request) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("Create 1 detailed story (about 8-9 sentences , only show me content) based on this story: \"")
+        prompt.append("Create 1 detailed story (about 8-9 sentences , only show me content, do not include any quotation marks) based on this story: \"")
                 .append(request.getShortScript())
                 .append("\"");
 
@@ -37,7 +37,14 @@ public class PromptBuilder {
     }
 
     private static String buildCaptionPrompt(GenerateTextRequest request) {
-        return "Generate 1 engaging social media captions (about 3-4 sentences , only show me content) for a video with this script: \"" +
+        return "Generate 1 engaging social media captions (about 3-4 sentences , only show me content, do not include any quotation marks) for a video with this script: \"" +
                 request.getShortScript() + "\"";
+    }
+
+    public static String removeQuotationMarks(String content) {
+        if (content == null) {
+            return null;
+        }
+        return content.replaceAll("[\"''']", "");
     }
 }

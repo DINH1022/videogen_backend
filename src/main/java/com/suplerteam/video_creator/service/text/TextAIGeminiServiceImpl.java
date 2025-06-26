@@ -42,7 +42,7 @@ public class TextAIGeminiServiceImpl implements TextAIService{
                     .bodyToMono(String.class)
                     .block();
             JsonNode jsonNode = objectMapper.readTree(response);
-            return jsonNode
+            String genText = jsonNode
                     .path("candidates")
                     .get(0)
                     .path("content")
@@ -50,6 +50,7 @@ public class TextAIGeminiServiceImpl implements TextAIService{
                     .get(0)
                     .path("text")
                     .asText();
+            return PromptBuilder.removeQuotationMarks(genText);
         }
         catch (Exception e){
             throw new RuntimeException(e.getMessage());
