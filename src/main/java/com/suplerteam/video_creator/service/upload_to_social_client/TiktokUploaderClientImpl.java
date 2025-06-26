@@ -69,7 +69,7 @@ public class TiktokUploaderClientImpl implements VideoUploaderClient {
             uploadVideoToUrl(uploadUrl, videoBytes);
             logger.info("Video uploaded to TikTok successfully");
 
-            return "Video uploaded to TikTok successfully";
+            return publishId;
 
         } catch (Exception e) {
             logger.error("Error uploading video to TikTok: {}", e.getMessage(), e);

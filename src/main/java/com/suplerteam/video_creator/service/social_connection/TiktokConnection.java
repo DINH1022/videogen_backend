@@ -71,7 +71,7 @@ public class TiktokConnection implements SocialConnectionService {
         String authUrl = UriComponentsBuilder.fromUriString(TIKTOK_AUTH_URL)
                 .queryParam("client_key", TIKTOK_CLIENT_KEY)
                 .queryParam("response_type", "code")
-                .queryParam("scope", "user.info.basic,video.upload,video.publish")
+                .queryParam("scope", "user.info.basic,video.upload,video.publish,video.list")
                 .queryParam("redirect_uri", TIKTOK_REDIRECT_URI)
                 .queryParam("state", userId)
                 .queryParam("code_challenge", codeChallenge)
