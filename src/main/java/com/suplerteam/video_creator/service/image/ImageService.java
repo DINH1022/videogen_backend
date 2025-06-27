@@ -8,4 +8,5 @@ import java.util.List;
 public interface ImageService {
     String generateAnImage(TextToImageRequest req) throws IOException;
     List<String> generateImages(List<TextToImageRequest> requests) throws InterruptedException, IOException;
+    List<String> generateImagesFromText(String text) throws InterruptedException, IOException;
 }

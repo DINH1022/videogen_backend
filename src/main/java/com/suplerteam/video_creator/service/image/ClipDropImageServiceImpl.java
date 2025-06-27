@@ -60,4 +60,18 @@ public class ClipDropImageServiceImpl implements ImageService{
         }
         return urls;
     }
+
+    @Override
+    public List<String> generateImagesFromText(String text) throws InterruptedException, IOException {
+        String[] sentences = text.split("[.!?]+");
+
+        List<TextToImageRequest> requests = new ArrayList<>();
+        for (String sentence : sentences) {
+            String trimmedSentence = sentence.trim();
+            if (!trimmedSentence.isEmpty()) {
+                requests.add(new TextToImageRequest(trimmedSentence));
+            }
+        }
+        return generateImages(requests);
+    }
 }

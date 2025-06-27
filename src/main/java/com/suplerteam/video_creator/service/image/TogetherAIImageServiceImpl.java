@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,5 +74,20 @@ public class TogetherAIImageServiceImpl implements ImageService {
             urls.add(newUrl);
         }
         return urls;
+    }
+
+    @Override
+    public List<String> generateImagesFromText(String text) throws InterruptedException, IOException {
+        String[] sentences = text.split("[.!?]+");
+
+        List<TextToImageRequest> requests = new ArrayList<>();
+        for (String sentence : sentences) {
+            String trimmedSentence = sentence.trim();
+            if (!trimmedSentence.isEmpty()) {
+                requests.add(new TextToImageRequest(trimmedSentence));
+            }
+        }
+
+        return generateImages(requests);
     }
 }

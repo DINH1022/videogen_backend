@@ -16,7 +16,8 @@ import java.util.List;
 public class ImageController {
 
     @Autowired
-    @Qualifier("clipdrop-ImageService")
+    //@Qualifier("clipdrop-ImageService")
+    @Qualifier("gemini-ImageService")
     private ImageService imageService;
 
     @PostMapping("/generate")
@@ -31,5 +32,12 @@ public class ImageController {
         throws InterruptedException, IOException {
             List<String> imageUrls = imageService.generateImages(requests);
             return ResponseEntity.ok(imageUrls);
+    }
+
+    @PostMapping("/generate-from-story")
+    public ResponseEntity<?> generateImagesFromText(@RequestBody TextToImageRequest request)
+            throws InterruptedException, IOException {
+        List<String> imageUrls = imageService.generateImagesFromText(request.getText());
+        return ResponseEntity.ok(imageUrls);
     }
 }
