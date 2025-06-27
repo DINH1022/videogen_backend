@@ -32,9 +32,9 @@ public class CambAIAudioServiceImpl implements AudioService{
         CambAIApiBody cambAIApiBody=CambAIApiBody.builder()
                 .text(req.getText())
                 .voiceId(req.getVoice()!=null?req.getVoice():CambAIApiBody.DEFAULT_VOICE_ID)
-                .language(req.getLanguage()!=null?req.getVoice():CambAIApiBody.DEFAULT_LANGUAGE)
-                .gender(req.getGender()!=null?req.getVoice():CambAIApiBody.DEFAULT_GENDER)
-                .age(req.getAge()!=null?req.getVoice():CambAIApiBody.DEFAULT_AGE)
+                .language(req.getLanguage()!=null?req.getLanguage():CambAIApiBody.DEFAULT_LANGUAGE)
+                .gender(req.getGender()!=null?req.getGender():CambAIApiBody.DEFAULT_GENDER)
+                .age(req.getAge()!=null?req.getAge():CambAIApiBody.DEFAULT_AGE)
                 .build();
 
         CambAICreateApiResponse createResponse = webClientBuilder.build()
