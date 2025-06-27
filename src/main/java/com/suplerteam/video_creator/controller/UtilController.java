@@ -34,4 +34,17 @@ public class UtilController {
         String url=cloudinaryService.uploadVideo(resource,uuidName);
         return ResponseEntity.ok(url);
     }
+
+    @PostMapping("/upload-audio-to-cloudinary")
+    public ResponseEntity<String> uploadAudioToCloudinary(
+            @RequestParam("audio") MultipartFile file
+    ) throws IOException {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is empty");
+        }
+        InputStreamResource resource = new InputStreamResource(file.getInputStream());
+        String uuidName = utilityService.getUUID();
+        String url = cloudinaryService.uploadAudio(resource, uuidName);
+        return ResponseEntity.ok(url);
+    }
 }

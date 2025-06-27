@@ -75,7 +75,7 @@ public class WebClientBuilderConfig {
                 .exchangeStrategies(ExchangeStrategies.builder()
                         .codecs(configurer -> configurer
                                 .defaultCodecs()
-                                .maxInMemorySize(20 * 1024 * 1024)) // 10MB
+                                .maxInMemorySize(20 * 1024 * 1024))
                         .build());
     }
 
