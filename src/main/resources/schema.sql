@@ -47,8 +47,8 @@ CREATE TABLE workspace (
     description VARCHAR(255),
     user_id SERIAL NOT NULL,
     script VARCHAR(255),
-    images_set JSONB,
-    audio_id SERIAL,
+    images_set TEXT[],
+    audio_id INTEGER,
     video_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
