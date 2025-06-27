@@ -1,5 +1,6 @@
 package com.suplerteam.video_creator.controller;
 
+import com.suplerteam.video_creator.DTO.UserDTO;
 import com.suplerteam.video_creator.request.auth.LoginRequest;
 import com.suplerteam.video_creator.request.auth.RegisterRequest;
 import com.suplerteam.video_creator.service.JWTService;
@@ -41,7 +42,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(
+    public ResponseEntity<?> login(
             @RequestBody LoginRequest loginRequest){
         Authentication authentication=authenticationProvider.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -54,12 +55,19 @@ public class AuthenticationController {
         // Get additional user info to include in token
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        UserDTO userDTO = UserDTO.createFromEntity(user);
+
         
         // Create claims with user ID and any other necessary data
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("userId", user.getId());
         
         String jwtToken = jwtService.generateToken(extraClaims, userDetails);
-        return ResponseEntity.ok(jwtToken);
+        Map<String,Object> response = new HashMap<>();
+        response.put("token", jwtToken);
+        response.put("user", userDTO);
+
+        return ResponseEntity.ok(response);
     }
 }

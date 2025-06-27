@@ -16,12 +16,12 @@ public class PromptBuilder {
         }
     }
     private static String buildShortScriptPrompt(GenerateTextRequest request) {
-        return "Create 1 story (about 3-4 sentences, only show me content, do not include any quotation marks) about: " + request.getPrompt();
+        return "Create 1 story (about 3 sentences, only show me content, do not include any quotation marks) about: " + request.getPrompt();
     }
 
     private static String buildLongScriptPrompt(GenerateTextRequest request) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("Create 1 detailed story (about 8-9 sentences , only show me content, do not include any quotation marks) based on this story: \"")
+        prompt.append("Create a detailed story that consists of exactly 5 sentences and has a total character count between 380 and 430 characters (including spaces and punctuation), only show me content, do not include any quotation marks) based on this story: \"")
                 .append(request.getShortScript())
                 .append("\"");
 
