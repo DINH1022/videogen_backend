@@ -6,6 +6,7 @@ import com.suplerteam.video_creator.request.text.GenerateTextRequest;
 import com.suplerteam.video_creator.request.text.deepseek.DeepSeekApiBody;
 import com.suplerteam.video_creator.request.text.gemini.GeminiApiBody;
 import com.suplerteam.video_creator.response.shot_stack.create.ShotStackSuccessApiResponse;
+import com.suplerteam.video_creator.util.PromptBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +32,10 @@ public class TextAIServiceDeepSeekImpl implements TextAIService{
     @Override
     public String generateContent(GenerateTextRequest req) {
         try{
-            DeepSeekApiBody body=DeepSeekApiBody.buildFromGenerateTextRequest(req);
+            GenerateTextRequest enhancedRequest = new GenerateTextRequest();
+            enhancedRequest.setPrompt(PromptBuilder.buildPrompt(req));
+
+            DeepSeekApiBody body=DeepSeekApiBody.buildFromGenerateTextRequest(enhancedRequest);
 
             String response = webClientBuilder.build()
                     .post()
@@ -40,12 +44,13 @@ public class TextAIServiceDeepSeekImpl implements TextAIService{
                     .bodyToMono(String.class)
                     .block();
             JsonNode jsonNode = objectMapper.readTree(response);
-            return jsonNode
+            String genText = jsonNode
                     .path("choices")
                     .get(0)
                     .path("message")
                     .path("content")
                     .asText();
+            return PromptBuilder.removeQuotationMarks(genText);
         }
         catch (Exception e){
             throw new RuntimeException(e.getMessage());

@@ -2,9 +2,11 @@ package com.suplerteam.video_creator.service.video;
 
 import com.suplerteam.video_creator.entity.User;
 import com.suplerteam.video_creator.entity.UserVideo;
+import com.suplerteam.video_creator.entity.Workspace;
 import com.suplerteam.video_creator.exception.ResourceNotFoundException;
 import com.suplerteam.video_creator.repository.UserRepository;
 import com.suplerteam.video_creator.repository.UserVideoRespository;
+import com.suplerteam.video_creator.repository.WorkspaceRepository;
 import com.suplerteam.video_creator.request.video.CreateVideoRequest;
 import com.suplerteam.video_creator.request.video.shot_stack.ShotStackApiBody;
 import com.suplerteam.video_creator.response.shot_stack.create.ShotStackSuccessApiResponse;
@@ -18,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Service
 public class ShotStackVideoServiceImpl implements VideoService{
@@ -32,16 +35,16 @@ public class ShotStackVideoServiceImpl implements VideoService{
     private UserRepository userRepository;
     
     @Autowired
-    private UserVideoRespository userVideoRepository;
+    private WorkspaceRepository workspaceRepository;
 
     private Boolean isVideoCreated(ShotStackRenderStatusApiResponse res){
         return res.getSuccess().equals(true)
                 && res.getMessage().equalsIgnoreCase("ok")
                 && res.getResponse().getStatus().equalsIgnoreCase("done");
     }
-    
+
     @Override
-    public String createVideo(CreateVideoRequest req, String username) throws InterruptedException, IOException {
+    public String createVideo(CreateVideoRequest req, String workspaceId, String username) throws InterruptedException, IOException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
 
@@ -73,16 +76,13 @@ public class ShotStackVideoServiceImpl implements VideoService{
             Thread.sleep(SLEEP_TIME);
         }
         url=cloudinaryService.uploadVideoFromUrl(url);
-        
-        UserVideo userVideo = UserVideo.builder()
-                .video_url(url)
-                .user(user)
-                .title(req.getTitle())
-                .createdAt(new Date(Instant.now().toEpochMilli())) // Changed from created_at to createdAt
-                .build();
-                
-        userVideoRepository.save(userVideo);
-        
+
+        Workspace workspace = workspaceRepository.findById(Long.valueOf(workspaceId))
+                .orElseThrow(() -> new ResourceNotFoundException("Workspace not found with id: " + workspaceId));
+
+        workspace.setVideoUrl(url);
+        workspaceRepository.save(workspace);
+
         return url;
     }
 }

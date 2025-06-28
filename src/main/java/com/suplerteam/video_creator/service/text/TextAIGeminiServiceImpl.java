@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suplerteam.video_creator.request.text.GenerateTextRequest;
 import com.suplerteam.video_creator.request.text.gemini.GeminiApiBody;
+import com.suplerteam.video_creator.util.PromptBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,10 @@ public class TextAIGeminiServiceImpl implements TextAIService{
     @Override
     public String generateContent(GenerateTextRequest req) {
         try{
-            GeminiApiBody body=GeminiApiBody.buildFromGenerateTextRequest(req);
+            GenerateTextRequest enhancedRequest = new GenerateTextRequest();
+            enhancedRequest.setPrompt(PromptBuilder.buildPrompt(req));
+
+            GeminiApiBody body=GeminiApiBody.buildFromGenerateTextRequest(enhancedRequest);
             String response = webClientBuilder.build()
                     .post()
                     .uri(MODEL+TYPE_OF_ENDPOINT+"?key="+GEMINI_SECRET_KEY)
@@ -38,7 +42,7 @@ public class TextAIGeminiServiceImpl implements TextAIService{
                     .bodyToMono(String.class)
                     .block();
             JsonNode jsonNode = objectMapper.readTree(response);
-            return jsonNode
+            String genText = jsonNode
                     .path("candidates")
                     .get(0)
                     .path("content")
@@ -46,6 +50,7 @@ public class TextAIGeminiServiceImpl implements TextAIService{
                     .get(0)
                     .path("text")
                     .asText();
+            return PromptBuilder.removeQuotationMarks(genText);
         }
         catch (Exception e){
             throw new RuntimeException(e.getMessage());

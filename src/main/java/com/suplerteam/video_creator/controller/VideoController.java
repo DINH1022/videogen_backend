@@ -6,10 +6,7 @@ import com.suplerteam.video_creator.service.video.VideoService;
 import com.suplerteam.video_creator.util.AuthenticationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
@@ -23,10 +20,11 @@ public class VideoController {
     @Autowired
     private AuthenticationUtil authenticationUtil;
 
-    @PostMapping("/create")
+    @PostMapping("/create/{workspaceId}")
     public ResponseEntity<String> createVideo(
+            @PathVariable String workspaceId,
             @RequestBody CreateVideoRequest req) throws InterruptedException, IOException {
         User currentUser = authenticationUtil.getCurrentUser();
-        return ResponseEntity.ok(videoService.createVideo(req, currentUser.getUsername()));
+        return ResponseEntity.ok(videoService.createVideo(req, workspaceId, currentUser.getUsername()));
     }
 }

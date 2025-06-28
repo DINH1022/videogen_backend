@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
@@ -55,14 +56,29 @@ public class WebClientBuilderConfig {
                 .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer "+GROQ_AI_SECRET_KEY);
     }
 
+//    @Bean
+//    @Qualifier("cambAI-webClient")
+//    public WebClient.Builder cambAIWebClientBuilder(){
+//        return WebClient.builder()
+//                .baseUrl(CAMB_AI_BASE_URL)
+//                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+//                .defaultHeader("x-api-key",CAMB_AI_SECRET_KEY);
+//    }
+
     @Bean
     @Qualifier("cambAI-webClient")
-    public WebClient.Builder cambAIWebClientBuilder(){
+    public WebClient.Builder cambAIWebClientBuilder() {
         return WebClient.builder()
                 .baseUrl(CAMB_AI_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("x-api-key",CAMB_AI_SECRET_KEY);
+                .defaultHeader("x-api-key", CAMB_AI_SECRET_KEY)
+                .exchangeStrategies(ExchangeStrategies.builder()
+                        .codecs(configurer -> configurer
+                                .defaultCodecs()
+                                .maxInMemorySize(20 * 1024 * 1024))
+                        .build());
     }
+
 
     @Bean
     @Qualifier("togetherAI-webClient")
