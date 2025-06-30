@@ -22,4 +22,7 @@ public class WorkspaceDetailResponse {
     private String audioUrl;
     private String videoUrl;
     private LocalDateTime createdAt;
+    private String language;
+    private String shortScript;
+    private String writingStyle;
 }

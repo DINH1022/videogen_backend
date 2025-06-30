@@ -54,6 +54,12 @@ CREATE TABLE workspace (
 );
 
 ALTER TABLE workspace
+ADD COLUMN language VARCHAR(50),
+ADD COLUMN short_script VARCHAR(1000),
+ADD COLUMN writing_style VARCHAR(100);
+
+
+ALTER TABLE workspace
 ADD CONSTRAINT fk_workspace_user
 FOREIGN KEY (user_id)
 REFERENCES users(id);

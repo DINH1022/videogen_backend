@@ -16,4 +16,7 @@ public class WorkspaceUpdateRequest {
     private String[] imagesSet;
     private Long audioId;
     private String videoUrl;
+    private String language;
+    private String shortScript;
+    private String writingStyle;
 }

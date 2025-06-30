@@ -44,4 +44,13 @@ public class Workspace {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "language")
+    private String language;
+
+    @Column(name = "short_script")
+    private String shortScript;
+
+    @Column(name = "writing_style")
+    private String writingStyle;
 }

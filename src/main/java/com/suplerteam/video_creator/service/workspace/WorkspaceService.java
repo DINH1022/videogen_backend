@@ -63,22 +63,24 @@ public class WorkspaceService {
             audio = audioRepository.findById(request.getAudioId()).orElse(null);
         }
 
-        // Update the workspace
         workspace.setScript(request.getScript());
         workspace.setImagesSet(request.getImagesSet());
         workspace.setAudio(audio);
         workspace.setVideoUrl(request.getVideoUrl());
+        workspace.setLanguage(request.getLanguage());
+        workspace.setShortScript(request.getShortScript());
+        workspace.setWritingStyle(request.getWritingStyle());
 
         Workspace updatedWorkspace = workspaceRepository.save(workspace);
         return mapToDetailResponse(updatedWorkspace);
     }
 
-    public List<WorkspaceSummaryResponse> getAllWorkspaces() {
+    public List<WorkspaceDetailResponse> getAllWorkspaces() {
         User user = authenticationUtil.getCurrentUser();
 
         List<Workspace> workspaces = workspaceRepository.findByUserId(user.getId());
         return workspaces.stream()
-                .map(this::mapToSummaryResponse)
+                .map(this::mapToDetailResponse)
                 .collect(Collectors.toList());
     }
 
@@ -110,6 +112,9 @@ public class WorkspaceService {
                 .audioUrl(workspace.getAudio() != null ? workspace.getAudio().getUrl() : null)
                 .videoUrl(workspace.getVideoUrl())
                 .createdAt(workspace.getCreatedAt())
+                .language(workspace.getLanguage())
+                .shortScript(workspace.getShortScript())
+                .writingStyle(workspace.getWritingStyle())
                 .build();
     }
 }
