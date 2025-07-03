@@ -5,8 +5,11 @@ import com.suplerteam.video_creator.request.audio.TextToSpeechRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.io.ByteArrayInputStream;
 
 @Service
 @Qualifier("groq-AudioService")
@@ -26,4 +29,5 @@ public class GroqAudioServiceImpl implements AudioService{
                 .bodyToMono(InputStreamResource.class)
                 .block();
     }
+
 }

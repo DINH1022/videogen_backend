@@ -53,7 +53,13 @@ public class WebClientBuilderConfig {
         return WebClient.builder()
                 .baseUrl(GROQ_AI_BASE_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION,"Bearer "+GROQ_AI_SECRET_KEY);
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + GROQ_AI_SECRET_KEY)
+                .exchangeStrategies(ExchangeStrategies.builder()
+                        .codecs(configurer -> configurer
+                                .defaultCodecs()
+                                .maxInMemorySize(100 * 1024 * 1024))
+                        .build());
+
     }
 
 //    @Bean

@@ -33,6 +33,10 @@ public class PromptBuilder {
             prompt.append(" in ").append(request.getLanguage()).append(" language");
         }
 
+        if (request.getTopic() != null && !request.getTopic().isEmpty()) {
+            prompt.append(" , each sentence must contain the ").append(request.getTopic()).append(" topic");
+        }
+
         return prompt.toString();
     }
 

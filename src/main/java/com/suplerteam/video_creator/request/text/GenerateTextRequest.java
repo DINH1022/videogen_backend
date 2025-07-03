@@ -15,6 +15,9 @@ public class GenerateTextRequest {
     @JsonProperty("prompt")
     private String prompt;
 
+    @JsonProperty("topic")
+    private String topic;
+
     @JsonProperty("type")
     private TextGenerationType type;
 

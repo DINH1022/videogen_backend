@@ -20,7 +20,8 @@ public class AudioController {
     CloudinaryService cloudinaryService;
 
     @Autowired
-    @Qualifier("cambAI-AudioService")
+    //@Qualifier("cambAI-AudioService")
+    @Qualifier("groq-AudioService")
     private AudioService audioService;
 
     @Autowired
@@ -28,12 +29,12 @@ public class AudioController {
 
     @GetMapping("/generate")
     public ResponseEntity<String> textToSpeech (@RequestBody TextToSpeechRequest request)
-        throws InterruptedException, IOException {
-            InputStreamResource audioResource = audioService.textToSpeech(request);
-            String uniqueStr = "gnkjewhiuhfuhahcj";
-            String audioUrl = cloudinaryService.uploadAudio(audioResource,uniqueStr);
-            audioStorageService.saveAudio(audioUrl, request);
+            throws InterruptedException, IOException {
+        InputStreamResource audioResource = audioService.textToSpeech(request);
+        String uniqueStr = "gnkjewhiuhfuhahcj";
+        String audioUrl = cloudinaryService.uploadAudio(audioResource,uniqueStr);
+        audioStorageService.saveAudio(audioUrl, request);
 
-            return ResponseEntity.ok(audioUrl);
+        return ResponseEntity.ok(audioUrl);
     }
 }
