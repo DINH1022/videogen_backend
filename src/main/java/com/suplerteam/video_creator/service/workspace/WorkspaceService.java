@@ -61,6 +61,11 @@ public class WorkspaceService {
         Audio audio = null;
         if (request.getAudioId() != null) {
             audio = audioRepository.findById(request.getAudioId()).orElse(null);
+        } else if (request.getAudioUrl() != null) {
+            audio = Audio.builder()
+                    .url(request.getAudioUrl())
+                    .build();
+            audio = audioRepository.save(audio);
         }
 
         workspace.setScript(request.getScript());
