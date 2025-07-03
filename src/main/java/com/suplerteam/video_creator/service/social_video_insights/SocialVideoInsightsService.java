@@ -11,5 +11,4 @@ public interface SocialVideoInsightsService {
     Long getTotalViewOfUploadedVideosOnYoutube(String username);
     List<TiktokStatsDTO> getStatsOfTiktokVideosOfUser(UserVideosStatsRequest req);
     Long getTotalViewOfUploadedVideosOnTiktok(String username);
-
 }

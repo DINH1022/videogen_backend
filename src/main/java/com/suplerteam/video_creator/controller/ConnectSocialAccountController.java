@@ -65,7 +65,7 @@ public class ConnectSocialAccountController {
         if (error != null) {
             log.error("TikTok OAuth error: {} - {}", error, errorDescription);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("http://localhost:8080/error?message=" + errorDescription))
+                    .location(URI.create("http://localhost:5173/error?message=" + errorDescription))
                     .build();
         }
 
@@ -79,12 +79,12 @@ public class ConnectSocialAccountController {
         } catch (Exception e) {
             log.error("Error processing TikTok callback", e);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("http://localhost:8080/error?message=Connection+failed"))
+                    .location(URI.create("http://localhost:5173/error?message=Connection+failed"))
                     .build();
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("http://localhost:8080/success"))
+                .location(URI.create("http://localhost:5173/success"))
                 .build();
     }
 

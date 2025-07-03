@@ -50,30 +50,28 @@ public class SocialVideoStatsController {
                 .getTotalViewOfUploadedVideosOnYoutube(username));
     }
 
-
-
     @GetMapping("/tiktok")
     public ResponseEntity<List<TiktokStatsDTO>> getTiktokVideosStats(
             @RequestParam(name = "page", defaultValue = "0")
             Integer page,
             @RequestParam(name = "size", defaultValue = "10")
             Integer size) {
-
         User currentUser = authenticationUtil.getCurrentUser();
+        String username = currentUser.getUsername();
         UserVideosStatsRequest req = UserVideosStatsRequest.builder()
-                .username(currentUser.getUsername())
+                .username(username)
                 .page(page)
                 .size(size)
                 .build();
-        return ResponseEntity.ok(socialVideoInsightsService
-                .getStatsOfTiktokVideosOfUser(req));
+        return ResponseEntity.ok(socialVideoInsightsService.getStatsOfTiktokVideosOfUser(req));
     }
 
     @GetMapping("/tiktok-total-views")
     public ResponseEntity<Long> getTiktokVideosTotalViews() {
         User currentUser = authenticationUtil.getCurrentUser();
-        return ResponseEntity.ok(socialVideoInsightsService
-                .getTotalViewOfUploadedVideosOnTiktok(currentUser.getUsername()));
+        String username = currentUser.getUsername();
+        return ResponseEntity.ok(socialVideoInsightsService.getTotalViewOfUploadedVideosOnTiktok(username));
     }
+
 
 }
