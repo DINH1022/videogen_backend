@@ -30,8 +30,8 @@ public class SocialVideoStatsController {
             Integer page,
             @RequestParam(name = "size",defaultValue = "10")
             Integer size){
-        //tech-debt: get username from context
-        String username="vinh";
+        User currentUser = authenticationUtil.getCurrentUser();
+        String username=currentUser.getUsername();
         UserVideosStatsRequest req=UserVideosStatsRequest.builder()
                 .username(username)
                 .page(page)
@@ -44,8 +44,8 @@ public class SocialVideoStatsController {
 
     @GetMapping("/youtube-total-views")
     public ResponseEntity<Long> getYoutubeVideosTotalViews(){
-        //tech-debt: get username from context
-        String username="vinh";
+        User currentUser = authenticationUtil.getCurrentUser();
+        String username=currentUser.getUsername();
         return ResponseEntity.ok(socialVideoInsightsService
                 .getTotalViewOfUploadedVideosOnYoutube(username));
     }

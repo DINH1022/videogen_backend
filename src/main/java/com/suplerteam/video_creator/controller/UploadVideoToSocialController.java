@@ -34,10 +34,9 @@ public class UploadVideoToSocialController {
     @PostMapping("/youtube-upload")
     public ResponseEntity<Boolean> uploadVideoToYoutube(
             @RequestBody SocialVideoUploadRequest req){
-        //tech-debt: get from jwtdoes
-        String username="vinh";
+        User currentUser = authenticationUtil.getCurrentUser();
+        String username=currentUser.getUsername();
         req.setUsername(username);
-        //var res=videoUploadService.upload(req);
         var res=youtubeUploadService.upload(req);
         return ResponseEntity.ok(res);
     }

@@ -3,6 +3,7 @@ package com.suplerteam.video_creator.controller;
 import com.suplerteam.video_creator.service.social_connection.SocialConnectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,9 @@ public class ConnectSocialAccountController {
     @Qualifier("TiktokConnection-Service")
     private SocialConnectionService tiktokConnectionService;
 
+    @Value("${myapp.parameters.front-end.base-url}")
+    private String FRONT_END_BASE_URL;
+
     private static final Logger log = LoggerFactory.getLogger(ConnectSocialAccountController.class);
 
     @GetMapping("/youtube")
@@ -38,9 +42,8 @@ public class ConnectSocialAccountController {
             @RequestParam("code")String code,
             @RequestParam("state")Long userId) {
         youtubeConnectionService.connectToSocialAccount(userId,code);
-        //tech-debt: replace by real front-end url
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("http://localhost:7171"))
+                .location(URI.create(FRONT_END_BASE_URL+"?status=success"))
                 .build();
     }
 
