@@ -1,4 +1,4 @@
-package com.suplerteam.video_creator.response.wikipedia;
+package com.suplerteam.video_creator.response.wikipedia.APICall;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

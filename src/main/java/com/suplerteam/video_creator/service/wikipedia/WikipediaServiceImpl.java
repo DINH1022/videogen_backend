@@ -1,9 +1,10 @@
 package com.suplerteam.video_creator.service.wikipedia;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.suplerteam.video_creator.response.wikipedia.WikiSection;
+import com.suplerteam.video_creator.response.wikipedia.APICall.WikiRelatingSearchResult;
+import com.suplerteam.video_creator.response.wikipedia.APICall.WikiSection;
+import com.suplerteam.video_creator.response.wikipedia.WikiRelatingResponse;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +87,7 @@ public class WikipediaServiceImpl implements WikipediaService{
         }
         List<WikiSection> sections=getAllSections(pageName);
         int index=sections
-                .stream().filter(section->section.getTitle().equals(sectionName))
+                .stream().filter(section->section.getTitle().replace(" ","_").equals(sectionName))
                 .mapToInt(WikiSection::getIndex)
                 .findFirst()
                 .orElse(-1);
@@ -96,13 +97,47 @@ public class WikipediaServiceImpl implements WikipediaService{
     @Override
     public String getContent(String url) {
         String wikiInformationUrl=WIKIPEDIA_BASE_URL+"/wiki/";
-        String pageName=url.substring(wikiInformationUrl.length(),'#');
+        String pageName=url.substring(wikiInformationUrl.length());
         int index=url.indexOf('#');
         String sectionName="";
         if(index!=-1){
+            pageName=pageName.substring(0,index-wikiInformationUrl.length());
             sectionName=url.substring(index+1);
         }
         int sectionIndex=getIndexBySectionName(pageName,sectionName);
         return getSectionContent(pageName,sectionIndex);
+    }
+
+    @Override
+    public List<WikiRelatingResponse> getRelatingLinks(String topic) {
+
+        try {
+            String wikiQueryTopicUrl = String.format(
+                    "%s/w/api.php?action=query&list=search&format=json&srsearch=%s",
+                    WIKIPEDIA_BASE_URL,
+                    URLEncoder.encode(topic,StandardCharsets.UTF_8));
+            String response = restTemplate.getForObject(wikiQueryTopicUrl, String.class);
+            JsonNode jsonNode = objectMapper.readTree(response);
+            List<WikiRelatingSearchResult> results = new ArrayList<>();
+            JsonNode searchNode = jsonNode.path("query").path("search");
+            for (JsonNode section : searchNode) {
+                WikiRelatingSearchResult result=WikiRelatingSearchResult
+                        .builder()
+                        .title(section.path("title").asText())
+                        .pageId(section.path("pageid").asInt())
+                        .size(section.path("size").asLong())
+                        .wordCount(section.path("wordcount").asLong())
+                        .snippet(Jsoup.parse(section.path("snippet").asText()).text())
+                        .build();
+                results.add(result);
+            }
+            return results.stream()
+                    .map(WikiRelatingResponse::createFromAPICallSearch)
+                    .toList();
+
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Error fetching sections", e);
+        }
     }
 }
