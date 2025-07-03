@@ -18,6 +18,6 @@ public class WorkspaceUpdateRequest {
     private String audioUrl;
     private String videoUrl;
     private String language;
-    private String shortScript;
+    private String[] shortScript;
     private String writingStyle;
 }

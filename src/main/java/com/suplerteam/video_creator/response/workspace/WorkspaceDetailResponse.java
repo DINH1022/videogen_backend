@@ -23,6 +23,6 @@ public class WorkspaceDetailResponse {
     private String videoUrl;
     private LocalDateTime createdAt;
     private String language;
-    private String shortScript;
+    private String[] shortScript;
     private String writingStyle;
 }

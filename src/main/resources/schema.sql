@@ -58,6 +58,9 @@ ADD COLUMN language VARCHAR(50),
 ADD COLUMN short_script VARCHAR(1000),
 ADD COLUMN writing_style VARCHAR(100);
 
+ALTER TABLE workspace
+ALTER COLUMN short_script TYPE TEXT[] USING array[short_script],
+ALTER COLUMN script TYPE VARCHAR(2000);
 
 ALTER TABLE workspace
 ADD CONSTRAINT fk_workspace_user

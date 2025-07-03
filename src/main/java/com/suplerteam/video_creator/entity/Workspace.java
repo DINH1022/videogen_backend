@@ -48,8 +48,8 @@ public class Workspace {
     @Column(name = "language")
     private String language;
 
-    @Column(name = "short_script")
-    private String shortScript;
+    @Column(name = "short_script", columnDefinition = "text[]")
+    private String[] shortScript;
 
     @Column(name = "writing_style")
     private String writingStyle;
