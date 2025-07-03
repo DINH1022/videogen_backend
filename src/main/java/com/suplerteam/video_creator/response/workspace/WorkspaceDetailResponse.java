@@ -25,4 +25,5 @@ public class WorkspaceDetailResponse {
     private String language;
     private String[] shortScript;
     private String writingStyle;
+    private String topic;
 }

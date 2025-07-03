@@ -63,6 +63,10 @@ ALTER COLUMN short_script TYPE TEXT[] USING array[short_script],
 ALTER COLUMN script TYPE VARCHAR(2000);
 
 ALTER TABLE workspace
+ADD COLUMN topic VARCHAR(255);
+
+
+ALTER TABLE workspace
 ADD CONSTRAINT fk_workspace_user
 FOREIGN KEY (user_id)
 REFERENCES users(id);

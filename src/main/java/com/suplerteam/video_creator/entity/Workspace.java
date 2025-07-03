@@ -53,4 +53,7 @@ public class Workspace {
 
     @Column(name = "writing_style")
     private String writingStyle;
+
+    @Column(name = "topic")
+    private String topic;
 }

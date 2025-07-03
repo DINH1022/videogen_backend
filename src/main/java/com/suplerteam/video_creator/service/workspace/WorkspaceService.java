@@ -75,6 +75,7 @@ public class WorkspaceService {
         workspace.setLanguage(request.getLanguage());
         workspace.setShortScript(request.getShortScript());
         workspace.setWritingStyle(request.getWritingStyle());
+        workspace.setTopic(request.getTopic());
 
         Workspace updatedWorkspace = workspaceRepository.save(workspace);
         return mapToDetailResponse(updatedWorkspace);
@@ -120,6 +121,7 @@ public class WorkspaceService {
                 .language(workspace.getLanguage())
                 .shortScript(workspace.getShortScript())
                 .writingStyle(workspace.getWritingStyle())
+                .topic(workspace.getTopic())
                 .build();
     }
 }
