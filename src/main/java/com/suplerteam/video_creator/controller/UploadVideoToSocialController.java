@@ -46,7 +46,8 @@ public class UploadVideoToSocialController {
             @RequestBody SocialVideoUploadRequest req){
         User currentUser = authenticationUtil.getCurrentUser();
         req.setUsername(currentUser.getUsername());
-        return ResponseEntity.ok(tiktokUploadService.upload(req));
+        Boolean result = tiktokUploadService.upload(req);
+        return ResponseEntity.ok(result);
     }
 
 }
