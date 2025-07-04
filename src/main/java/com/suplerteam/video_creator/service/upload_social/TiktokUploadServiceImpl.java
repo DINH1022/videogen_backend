@@ -24,7 +24,7 @@ public class TiktokUploadServiceImpl implements VideoUploadService {
 
     @Override
     @Transactional
-    public Boolean upload(SocialVideoUploadRequest req) {
+    public String upload(SocialVideoUploadRequest req) {
         User user = userRepository.findByUsername(req.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Not found user"));
 
@@ -37,6 +37,6 @@ public class TiktokUploadServiceImpl implements VideoUploadService {
                 .build();
 
         user.getTiktokUploads().add(newUpload);
-        return true;
+        return "true";
     }
 }

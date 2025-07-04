@@ -19,7 +19,7 @@ import java.util.List;
 
 @Service
 @Qualifier("YoutubeConnection-Service")
-public class YoutubeConnection implements SocialConnectionService{
+public class YoutubeConnection implements SocialAccountLinkingService {
 
     @Value("${myapp.parameters.google-client-id}")
     private String  GOOGLE_CLIENT_ID;

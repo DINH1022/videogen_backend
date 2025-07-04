@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Qualifier("YoutubeUploadServiceImpl")
 public class YoutubeUploadServiceImpl implements VideoUploadService{
 
+    private final String YOUTUBE_BASE_URL="https://www.youtube.com/watch";
     @Autowired
     @Qualifier("youtube-uploader-Service")
     private VideoUploaderClient videoUploaderClient;
@@ -24,7 +25,7 @@ public class YoutubeUploadServiceImpl implements VideoUploadService{
 
     @Override
     @Transactional
-    public Boolean upload(SocialVideoUploadRequest req) {
+    public String upload(SocialVideoUploadRequest req) {
         User user=userRepository.findByUsername(req.getUsername())
                 .orElseThrow(()->new ResourceNotFoundException("Not found user"));
         String videoId=videoUploaderClient.uploadVideo(req);
@@ -34,6 +35,6 @@ public class YoutubeUploadServiceImpl implements VideoUploadService{
                 .videoId(videoId)
                 .build();
         user.getYoutubeUploads().add(newUpload);
-        return true;
+        return String.format("%s?v=%s",YOUTUBE_BASE_URL,videoId);
     }
 }
