@@ -1,11 +1,9 @@
 package com.suplerteam.video_creator.service.video;
 
 import com.suplerteam.video_creator.entity.User;
-import com.suplerteam.video_creator.entity.UserVideo;
 import com.suplerteam.video_creator.entity.Workspace;
 import com.suplerteam.video_creator.exception.ResourceNotFoundException;
 import com.suplerteam.video_creator.repository.UserRepository;
-import com.suplerteam.video_creator.repository.UserVideoRespository;
 import com.suplerteam.video_creator.repository.WorkspaceRepository;
 import com.suplerteam.video_creator.request.video.CreateVideoRequest;
 import com.suplerteam.video_creator.request.video.shot_stack.ShotStackApiBody;
@@ -30,9 +28,7 @@ public class ShotStackVideoServiceImpl implements VideoService{
 
     @Autowired
     private CloudinaryService cloudinaryService;
-    
-    @Autowired
-    private UserRepository userRepository;
+
     
     @Autowired
     private WorkspaceRepository workspaceRepository;
@@ -45,8 +41,6 @@ public class ShotStackVideoServiceImpl implements VideoService{
 
     @Override
     public String createVideo(CreateVideoRequest req, String workspaceId, String username) throws InterruptedException, IOException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
 
         final int SLEEP_TIME=2000;
         ShotStackApiBody body=ShotStackApiBody.createFromCreateVideoRequest(req);

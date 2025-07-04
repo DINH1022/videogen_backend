@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.suplerteam.video_creator.DTO.TiktokAggregateStatsDTO;
 import com.suplerteam.video_creator.DTO.TiktokStatsDTO;
 import com.suplerteam.video_creator.DTO.YoutubeStatsDTO;
 import com.suplerteam.video_creator.entity.SocialAccountConnection;
@@ -391,8 +392,6 @@ public class SocialVideoInsightsServiceImpl implements SocialVideoInsightsServic
         }
     }
 
-
-
     private String getTiktokAccessToken(String username) {
         // Use the same token retrieval logic as in TiktokUploaderClientImpl
         return socialAccountConnectionRepository.findByUser_Username(username)
@@ -400,7 +399,141 @@ public class SocialVideoInsightsServiceImpl implements SocialVideoInsightsServic
                 .orElseThrow(() -> new RuntimeException("TikTok token not found for user: " + username));
     }
 
+    @Override
+    public TiktokAggregateStatsDTO getTiktokAggregateStats(String username) {
+        try {
+            String accessToken = getTiktokAccessToken(username);
 
+            WebClient webClient = WebClient.builder()
+                    .defaultHeader("Authorization", "Bearer " + accessToken)
+                    .defaultHeader("Content-Type", "application/json; charset=UTF-8")
+                    .build();
+
+            List<String> allVideoIds = new ArrayList<>();
+            String cursor = null;
+            boolean hasMore = true;
+
+            while (hasMore) {
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("max_count", 20); // Maximum allowed by TikTok API
+                if (cursor != null) {
+                    requestBody.put("cursor", cursor);
+                }
+
+                String listResponse = webClient.post()
+                        .uri("https://open.tiktokapis.com/v2/video/list/?fields=id")
+                        .bodyValue(requestBody)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+
+                JsonNode listJsonResponse = objectMapper.readTree(listResponse);
+
+                if (!listJsonResponse.path("error").path("code").asText("").equals("ok")) {
+                    String errorMessage = listJsonResponse.path("error").path("message").asText("Unknown error");
+                    throw new RuntimeException("TikTok API error: " + errorMessage);
+                }
+
+                JsonNode videoListData = listJsonResponse.path("data");
+                JsonNode videos = videoListData.path("videos");
+
+                if (videos.isArray()) {
+                    for (JsonNode video : videos) {
+                        allVideoIds.add(video.path("id").asText());
+                    }
+                }
+
+                if (!videoListData.path("has_more").asBoolean(false)) {
+                    hasMore = false;
+                } else {
+                    cursor = videoListData.path("cursor").asText();
+                }
+            }
+
+            if (allVideoIds.isEmpty()) {
+                return TiktokAggregateStatsDTO.builder()
+                        .totalVideos(0)
+                        .totalViews(0L)
+                        .totalLikes(0L)
+                        .totalComments(0L)
+                        .totalShares(0L)
+                        .averageViews(0.0)
+                        .averageLikes(0.0)
+                        .averageComments(0.0)
+                        .averageShares(0.0)
+                        .build();
+            }
+
+            long totalViews = 0;
+            long totalLikes = 0;
+            long totalComments = 0;
+            long totalShares = 0;
+
+            int batchSize = 20;
+            for (int i = 0; i < allVideoIds.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, allVideoIds.size());
+                List<String> batchIds = allVideoIds.subList(i, endIndex);
+
+                Map<String, Object> statsRequestBody = new HashMap<>();
+                Map<String, Object> filters = new HashMap<>();
+                filters.put("video_ids", batchIds);
+                statsRequestBody.put("filters", filters);
+
+                String statsResponse = webClient.post()
+                        .uri("https://open.tiktokapis.com/v2/video/query/?fields=id,title,video_description,share_url,create_time,view_count,like_count,comment_count,share_count,cover_image_url")
+                        .bodyValue(statsRequestBody)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+
+                JsonNode statsJsonResponse = objectMapper.readTree(statsResponse);
+
+                if (!statsJsonResponse.path("error").path("code").asText("").equals("ok")) {
+                    String errorMessage = statsJsonResponse.path("error").path("message").asText("Unknown error");
+                    logger.error("Error fetching TikTok video stats: {}", errorMessage);
+                    throw new RuntimeException("TikTok API error: " + errorMessage);
+                }
+
+                JsonNode detailedVideos = statsJsonResponse.path("data").path("videos");
+                if (detailedVideos.isArray()) {
+                    for (JsonNode video : detailedVideos) {
+                        long viewCount = video.path("view_count").asLong(0);
+                        long likeCount = video.path("like_count").asLong(0);
+                        long commentCount = video.path("comment_count").asLong(0);
+                        long shareCount = video.path("share_count").asLong(0);
+
+                        totalViews += viewCount;
+                        totalLikes += likeCount;
+                        totalComments += commentCount;
+                        totalShares += shareCount;
+
+
+                    }
+                }
+            }
+
+            int totalVideos = allVideoIds.size();
+            double averageViews = totalVideos > 0 ? (double) totalViews / totalVideos : 0;
+            double averageLikes = totalVideos > 0 ? (double) totalLikes / totalVideos : 0;
+            double averageComments = totalVideos > 0 ? (double) totalComments / totalVideos : 0;
+            double averageShares = totalVideos > 0 ? (double) totalShares / totalVideos : 0;
+
+
+            return TiktokAggregateStatsDTO.builder()
+                    .totalVideos(totalVideos)
+                    .totalViews(totalViews)
+                    .totalLikes(totalLikes)
+                    .totalComments(totalComments)
+                    .totalShares(totalShares)
+                    .averageViews(averageViews)
+                    .averageLikes(averageLikes)
+                    .averageComments(averageComments)
+                    .averageShares(averageShares)
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to calculate TikTok aggregate statistics: " + e.getMessage(), e);
+        }
+    }
 
 
 }

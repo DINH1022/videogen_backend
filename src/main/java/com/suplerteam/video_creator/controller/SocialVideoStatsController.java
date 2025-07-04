@@ -1,5 +1,6 @@
 package com.suplerteam.video_creator.controller;
 
+import com.suplerteam.video_creator.DTO.TiktokAggregateStatsDTO;
 import com.suplerteam.video_creator.DTO.TiktokStatsDTO;
 import com.suplerteam.video_creator.DTO.YoutubeStatsDTO;
 import com.suplerteam.video_creator.entity.User;
@@ -73,5 +74,12 @@ public class SocialVideoStatsController {
         return ResponseEntity.ok(socialVideoInsightsService.getTotalViewOfUploadedVideosOnTiktok(username));
     }
 
+
+    @GetMapping("/tiktok-stats")
+    public ResponseEntity<TiktokAggregateStatsDTO> getTiktokAggregateStats() {
+        User currentUser = authenticationUtil.getCurrentUser();
+        String username = currentUser.getUsername();
+        return ResponseEntity.ok(socialVideoInsightsService.getTiktokAggregateStats(username));
+    }
 
 }

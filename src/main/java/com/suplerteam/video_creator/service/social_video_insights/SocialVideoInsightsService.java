@@ -1,5 +1,6 @@
 package com.suplerteam.video_creator.service.social_video_insights;
 
+import com.suplerteam.video_creator.DTO.TiktokAggregateStatsDTO;
 import com.suplerteam.video_creator.DTO.TiktokStatsDTO;
 import com.suplerteam.video_creator.DTO.YoutubeStatsDTO;
 import com.suplerteam.video_creator.request.social_video_stats.UserVideosStatsRequest;
@@ -11,4 +12,5 @@ public interface SocialVideoInsightsService {
     Long getTotalViewOfUploadedVideosOnYoutube(String username);
     List<TiktokStatsDTO> getStatsOfTiktokVideosOfUser(UserVideosStatsRequest req);
     Long getTotalViewOfUploadedVideosOnTiktok(String username);
+    TiktokAggregateStatsDTO getTiktokAggregateStats(String username);
 }
