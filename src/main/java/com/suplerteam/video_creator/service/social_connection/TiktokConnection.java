@@ -22,13 +22,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Qualifier("TiktokConnection-Service")
-public class TiktokConnection implements SocialConnectionService {
+public class TiktokConnection implements SocialAccountLinkingService {
     private static final Logger log = LoggerFactory.getLogger(TiktokConnection.class);
 
     @Value("${myapp.parameters.tiktok-client-key}")

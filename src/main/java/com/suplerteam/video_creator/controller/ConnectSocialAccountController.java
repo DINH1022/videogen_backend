@@ -1,6 +1,9 @@
 package com.suplerteam.video_creator.controller;
 
-import com.suplerteam.video_creator.service.social_connection.SocialConnectionService;
+import com.suplerteam.video_creator.response.AccountSocialConnectionResponse;
+import com.suplerteam.video_creator.service.social_connection.SocialAccountLinkingService;
+import com.suplerteam.video_creator.service.social_connection.SocialConnectionStatusService;
+import com.suplerteam.video_creator.util.AuthenticationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,17 +19,29 @@ import java.net.URI;
 public class ConnectSocialAccountController {
 
     @Autowired
+    private AuthenticationUtil authenticationUtil;
+    @Autowired
     @Qualifier("YoutubeConnection-Service")
-    private SocialConnectionService youtubeConnectionService;
+    private SocialAccountLinkingService youtubeConnectionService;
 
     @Autowired
     @Qualifier("TiktokConnection-Service")
-    private SocialConnectionService tiktokConnectionService;
+    private SocialAccountLinkingService tiktokConnectionService;
+
+    @Autowired
+    private SocialConnectionStatusService socialConnectionStatusService;
 
     @Value("${myapp.parameters.front-end.base-url}")
     private String FRONT_END_BASE_URL;
 
     private static final Logger log = LoggerFactory.getLogger(ConnectSocialAccountController.class);
+
+    @GetMapping("/status")
+    public ResponseEntity<AccountSocialConnectionResponse> getAccountLinkingStatus(){
+        String username=authenticationUtil.getCurrentUsername();
+        return ResponseEntity.ok(socialConnectionStatusService
+                .getAccountConnectionStatus(username));
+    }
 
     @GetMapping("/youtube")
     public ResponseEntity<Void> redirectToYoutubeOauth(

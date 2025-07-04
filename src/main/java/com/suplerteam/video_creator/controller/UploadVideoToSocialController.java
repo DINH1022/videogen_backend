@@ -32,7 +32,7 @@ public class UploadVideoToSocialController {
     private AuthenticationUtil authenticationUtil;
 
     @PostMapping("/youtube-upload")
-    public ResponseEntity<Boolean> uploadVideoToYoutube(
+    public ResponseEntity<String> uploadVideoToYoutube(
             @RequestBody SocialVideoUploadRequest req){
         User currentUser = authenticationUtil.getCurrentUser();
         String username=currentUser.getUsername();
@@ -42,11 +42,11 @@ public class UploadVideoToSocialController {
     }
 
     @PostMapping("/tiktok-upload")
-    public ResponseEntity<Boolean> uploadVideoToTiktok(
+    public ResponseEntity<String> uploadVideoToTiktok(
             @RequestBody SocialVideoUploadRequest req){
         User currentUser = authenticationUtil.getCurrentUser();
         req.setUsername(currentUser.getUsername());
-        Boolean result = tiktokUploadService.upload(req);
+        var result = tiktokUploadService.upload(req);
         return ResponseEntity.ok(result);
     }
 
