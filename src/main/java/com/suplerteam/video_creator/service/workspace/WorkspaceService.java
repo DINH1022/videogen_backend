@@ -58,24 +58,46 @@ public class WorkspaceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Workspace not found for this user"));
 
-        Audio audio = null;
+
         if (request.getAudioId() != null) {
-            audio = audioRepository.findById(request.getAudioId()).orElse(null);
+            Audio audio = audioRepository.findById(request.getAudioId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audio not found"));
+            workspace.setAudio(audio);
         } else if (request.getAudioUrl() != null) {
-            audio = Audio.builder()
+            Audio audio = Audio.builder()
                     .url(request.getAudioUrl())
                     .build();
             audio = audioRepository.save(audio);
+            workspace.setAudio(audio);
         }
 
-        workspace.setScript(request.getScript());
-        workspace.setImagesSet(request.getImagesSet());
-        workspace.setAudio(audio);
-        workspace.setVideoUrl(request.getVideoUrl());
-        workspace.setLanguage(request.getLanguage());
-        workspace.setShortScript(request.getShortScript());
-        workspace.setWritingStyle(request.getWritingStyle());
-        workspace.setTopic(request.getTopic());
+        if (request.getScript() != null) {
+            workspace.setScript(request.getScript());
+        }
+
+        if (request.getImagesSet() != null) {
+            workspace.setImagesSet(request.getImagesSet());
+        }
+
+        if (request.getVideoUrl() != null) {
+            workspace.setVideoUrl(request.getVideoUrl());
+        }
+
+        if (request.getLanguage() != null) {
+            workspace.setLanguage(request.getLanguage());
+        }
+
+        if (request.getShortScript() != null) {
+            workspace.setShortScript(request.getShortScript());
+        }
+
+        if (request.getWritingStyle() != null) {
+            workspace.setWritingStyle(request.getWritingStyle());
+        }
+
+        if (request.getTopic() != null) {
+            workspace.setTopic(request.getTopic());
+        }
 
         Workspace updatedWorkspace = workspaceRepository.save(workspace);
         return mapToDetailResponse(updatedWorkspace);
