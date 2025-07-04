@@ -1,5 +1,6 @@
 package com.suplerteam.video_creator.controller;
 
+import com.suplerteam.video_creator.entity.User;
 import com.suplerteam.video_creator.response.AccountSocialConnectionResponse;
 import com.suplerteam.video_creator.service.social_connection.SocialAccountLinkingService;
 import com.suplerteam.video_creator.service.social_connection.SocialConnectionStatusService;
@@ -63,10 +64,10 @@ public class ConnectSocialAccountController {
     }
 
     @GetMapping("/tiktok")
-    public ResponseEntity<Void> redirectToTiktokOauth(
-            @RequestParam(name = "user-id")Long userId){
+    public ResponseEntity<Void> redirectToTiktokOauth (){
+        User currentUser = authenticationUtil.getCurrentUser();
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(tiktokConnectionService.getAuthURL(userId)))
+                .location(URI.create(tiktokConnectionService.getAuthURL(currentUser.getId())))
                 .build();
     }
 
