@@ -28,12 +28,12 @@ public class TiktokUploadServiceImpl implements VideoUploadService {
         User user = userRepository.findByUsername(req.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Not found user"));
 
-        String videoId = videoUploaderClient.uploadVideo(req);
+        String title_video = videoUploaderClient.uploadVideo(req);
 
         TiktokUploads newUpload = TiktokUploads
                 .builder()
                 .user(user)
-                .videoId(videoId)
+                .title(title_video)
                 .build();
 
         user.getTiktokUploads().add(newUpload);

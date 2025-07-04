@@ -7,13 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.suplerteam.video_creator.DTO.TiktokAggregateStatsDTO;
 import com.suplerteam.video_creator.DTO.TiktokStatsDTO;
 import com.suplerteam.video_creator.DTO.YoutubeStatsDTO;
-import com.suplerteam.video_creator.entity.SocialAccountConnection;
-import com.suplerteam.video_creator.entity.TiktokUploads;
-import com.suplerteam.video_creator.entity.YoutubeUploads;
-import com.suplerteam.video_creator.repository.SocialAccountConnectionRepository;
-import com.suplerteam.video_creator.repository.TiktokVideosRepository;
-import com.suplerteam.video_creator.repository.UserRepository;
-import com.suplerteam.video_creator.repository.YoutubeVideosRepository;
+import com.suplerteam.video_creator.entity.*;
+import com.suplerteam.video_creator.exception.ResourceNotFoundException;
+import com.suplerteam.video_creator.repository.*;
 import com.suplerteam.video_creator.request.social_video_stats.UserVideosStatsRequest;
 import com.suplerteam.video_creator.response.youtube.ApiCall.YoutubeStatsApiResponse;
 import com.suplerteam.video_creator.service.upload_to_social_client.TiktokUploaderClientImpl;
@@ -31,10 +27,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SocialVideoInsightsServiceImpl implements SocialVideoInsightsService{
@@ -55,7 +48,11 @@ public class SocialVideoInsightsServiceImpl implements SocialVideoInsightsServic
     private ObjectMapper objectMapper;
 
     @Autowired
-    private TiktokVideosRepository tiktokVideosRepository;
+    private TiktokVideoRepository tiktokVideoRepository;
+
+    @Autowired
+    private TiktokUploadRepository tiktokUploadRepository;
+
     @Autowired
     private SocialAccountConnectionRepository socialAccountConnectionRepository;
 
@@ -137,7 +134,7 @@ public class SocialVideoInsightsServiceImpl implements SocialVideoInsightsServic
 
 
     @Override
-    public List<TiktokStatsDTO> getStatsOfTiktokVideosOfUser(UserVideosStatsRequest req) {
+    public List<TiktokStatsDTO> getAllTiktokVideos(UserVideosStatsRequest req) {
         logger.info("Fetching TikTok video stats directly from TikTok API for user: {}", req.getUsername());
 
         try {
@@ -248,6 +245,7 @@ public class SocialVideoInsightsServiceImpl implements SocialVideoInsightsServic
                                         .numOfComments(video.path("comment_count").asInt(0))
                                         .numOfShares(video.path("share_count").asInt(0))
                                         .videoId(video.path("id").asText(""))
+                                        .description(video.path("video_description").asText(""))
                                         .build();
 
                                 allVideos.add(statsDTO);
@@ -267,11 +265,61 @@ public class SocialVideoInsightsServiceImpl implements SocialVideoInsightsServic
                     cursor = videoListData.path("cursor").asText();
                 }
             }
-
+            saveOrUpdateTiktokVideos(req.getUsername(), allVideos);
             return allVideos;
         } catch (Exception e) {
             logger.error("Error fetching TikTok video stats", e);
             throw new RuntimeException("Failed to fetch TikTok video stats: " + e.getMessage(), e);
+        }
+    }
+
+
+    private void saveOrUpdateTiktokVideos(String username, List<TiktokStatsDTO> videos) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+
+        for (TiktokStatsDTO videoStats : videos) {
+            Optional<TiktokVideo> existingVideo = tiktokVideoRepository.findByVideoId(videoStats.getVideoId());
+
+            Optional<TiktokUploads> matchingUpload = Optional.ofNullable(tiktokUploadRepository.findByTitle(videoStats.getTitle()));
+
+            if (existingVideo.isPresent()) {
+                TiktokVideo video = existingVideo.get();
+                video.setTitle(videoStats.getTitle());
+                video.setUrl(videoStats.getUrl());
+                video.setDescription(videoStats.getDescription());
+                video.setThumbnail(videoStats.getThumbnail());
+                video.setPublishedAt(videoStats.getPublishedAt());
+                video.setNumViews(videoStats.getNumOfViews());
+                video.setNumLikes(videoStats.getNumOfLikes());
+                video.setNumComments(videoStats.getNumOfComments());
+                video.setNumShares(videoStats.getNumOfShares());
+                video.setLastUpdated(LocalDateTime.now());
+
+                // If we found a matching upload and it's not already set
+                if (matchingUpload.isPresent() && video.getTiktokUpload() == null) {
+                    video.setTiktokUpload(matchingUpload.get());
+                }
+
+                tiktokVideoRepository.save(video);
+            } else {
+                // Create new record
+                TiktokVideo video = TiktokVideo.builder()
+                    .videoId(videoStats.getVideoId())
+                    .title(videoStats.getTitle())
+                    .url(videoStats.getUrl())
+                    .description(videoStats.getDescription())
+                    .thumbnail(videoStats.getThumbnail())
+                    .publishedAt(videoStats.getPublishedAt())
+                    .numViews(videoStats.getNumOfViews())
+                    .numLikes(videoStats.getNumOfLikes())
+                    .numComments(videoStats.getNumOfComments())
+                    .numShares(videoStats.getNumOfShares())
+                    .tiktokUpload(matchingUpload.orElse(null))
+                    .build();
+
+                tiktokVideoRepository.save(video);
+            }
         }
     }
 

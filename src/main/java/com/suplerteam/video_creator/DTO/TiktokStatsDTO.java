@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class TiktokStatsDTO {
     private String title;
     private String url;
+    private String description;
     private String thumbnail;
     private LocalDateTime publishedAt;
     private Long numOfViews;

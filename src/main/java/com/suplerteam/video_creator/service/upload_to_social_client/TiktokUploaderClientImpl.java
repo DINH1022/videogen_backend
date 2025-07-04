@@ -7,7 +7,6 @@ import com.suplerteam.video_creator.entity.TiktokUploads;
 import com.suplerteam.video_creator.entity.User;
 import com.suplerteam.video_creator.exception.ResourceNotFoundException;
 import com.suplerteam.video_creator.repository.SocialAccountConnectionRepository;
-import com.suplerteam.video_creator.repository.TiktokVideosRepository;
 import com.suplerteam.video_creator.repository.UserRepository;
 import com.suplerteam.video_creator.request.social_video_upload.SocialVideoUploadRequest;
 import org.slf4j.Logger;
@@ -43,9 +42,6 @@ public class TiktokUploaderClientImpl implements VideoUploaderClient {
 
     @Autowired
     private SocialAccountConnectionRepository socialAccountConnectionRepository;
-
-    @Autowired
-    private TiktokVideosRepository tiktokVideosRepository;
 
     @Autowired
     @Qualifier("tiktok-webClient")
@@ -96,7 +92,9 @@ public class TiktokUploaderClientImpl implements VideoUploaderClient {
             } else {
                 logger.warn("Video upload completed, but publishing status is pending");
             }
-            return publishId;
+
+
+            return req.getTitle();
 
 
 

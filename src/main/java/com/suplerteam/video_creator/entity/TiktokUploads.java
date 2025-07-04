@@ -17,8 +17,8 @@ public class TiktokUploads {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "video_id", nullable = false)
-    private String videoId;
+    @Column(name = "title", nullable = false)
+    private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

@@ -8,12 +8,10 @@ import com.suplerteam.video_creator.request.social_video_stats.UserVideosStatsRe
 import com.suplerteam.video_creator.service.social_video_insights.SocialVideoInsightsService;
 import com.suplerteam.video_creator.util.AuthenticationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/video-stats")
@@ -64,7 +62,7 @@ public class SocialVideoStatsController {
                 .page(page)
                 .size(size)
                 .build();
-        return ResponseEntity.ok(socialVideoInsightsService.getStatsOfTiktokVideosOfUser(req));
+        return ResponseEntity.ok(socialVideoInsightsService.getAllTiktokVideos(req));
     }
 
     @GetMapping("/tiktok-total-views")

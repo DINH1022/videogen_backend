@@ -24,12 +24,6 @@ CREATE TABLE YOUTUBE_UPLOADS(
 )
 
 
-CREATE TABLE TIKTOK_UPLOADS(
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    video_id varchar(255),
-    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 
 CREATE TABLE audios (
@@ -75,6 +69,31 @@ ALTER TABLE workspace
 ADD CONSTRAINT fk_workspace_audio
 FOREIGN KEY (audio_id)
 REFERENCES audios(id);
+
+DROP TABLE IF EXISTS TIKTOK_UPLOADS;
+CREATE TABLE TIKTOK_UPLOADS(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    title varchar(255) UNIQUE NOT NULL,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tiktok_videos (
+    id SERIAL PRIMARY KEY,
+    video_id VARCHAR(255) UNIQUE NOT NULL,
+    title VARCHAR(1000),
+    url VARCHAR(1000),
+    description TEXT,
+    thumbnail VARCHAR(1000),
+    published_at TIMESTAMP,
+    num_views BIGINT DEFAULT 0,
+    num_likes INTEGER DEFAULT 0,
+    num_comments INTEGER DEFAULT 0,
+    num_shares INTEGER DEFAULT 0,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tiktok_upload_id INTEGER,
+    FOREIGN KEY (title) REFERENCES tiktok_uploads(title)
+);
 
 
 ALTER TABLE TIKTOK_UPLOADS

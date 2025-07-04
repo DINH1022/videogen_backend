@@ -10,7 +10,7 @@ import java.util.List;
 public interface SocialVideoInsightsService {
     List<YoutubeStatsDTO> getStatsOfYoutubeVideosOfUser(UserVideosStatsRequest req);
     Long getTotalViewOfUploadedVideosOnYoutube(String username);
-    List<TiktokStatsDTO> getStatsOfTiktokVideosOfUser(UserVideosStatsRequest req);
+    List<TiktokStatsDTO> getAllTiktokVideos(UserVideosStatsRequest req);
     Long getTotalViewOfUploadedVideosOnTiktok(String username);
     TiktokAggregateStatsDTO getTiktokAggregateStats(String username);
 }
