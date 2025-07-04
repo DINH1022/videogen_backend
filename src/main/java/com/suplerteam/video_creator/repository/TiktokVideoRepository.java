@@ -16,4 +16,7 @@ public interface TiktokVideoRepository extends JpaRepository<TiktokVideo, Long> 
     Optional<TiktokVideo> findByTiktokUpload_Id(Long uploadId);
     List<TiktokVideo> findByTitle(String title);
     List<TiktokVideo> findByTiktokUpload_User(User user);
+
+    Optional<TiktokVideo> findByIdAndTiktokUpload_User(Long id, User user);
+
 }

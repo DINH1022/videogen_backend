@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TiktokStatsDTO {
+    private Long id;
     private String title;
     private String url;
     private String description;
