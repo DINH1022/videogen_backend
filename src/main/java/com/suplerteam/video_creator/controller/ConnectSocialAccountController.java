@@ -64,10 +64,10 @@ public class ConnectSocialAccountController {
     }
 
     @GetMapping("/tiktok")
-    public ResponseEntity<Void> redirectToTiktokOauth (){
-        User currentUser = authenticationUtil.getCurrentUser();
+    public ResponseEntity<Void> redirectToTiktokOauth (@RequestParam(name = "user-id")Long userId){
+        //User currentUser = authenticationUtil.getCurrentUser();
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(tiktokConnectionService.getAuthURL(currentUser.getId())))
+                .location(URI.create(tiktokConnectionService.getAuthURL(userId)))
                 .build();
     }
 
@@ -77,14 +77,6 @@ public class ConnectSocialAccountController {
             @RequestParam(value = "state", required = false) Long userId,
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "error_description", required = false) String errorDescription) {
-
-        if (error != null) {
-            log.error("TikTok OAuth error: {} - {}", error, errorDescription);
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("http://localhost:5173/error?message=" + errorDescription))
-                    .build();
-        }
-
         try {
             boolean success = tiktokConnectionService.connectToSocialAccount(userId, code);
             if (!success) {
@@ -95,13 +87,14 @@ public class ConnectSocialAccountController {
         } catch (Exception e) {
             log.error("Error processing TikTok callback", e);
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .location(URI.create("http://localhost:5173/error?message=Connection+failed"))
+                    .location(URI.create(FRONT_END_BASE_URL+"/error?message=Connection+failed"))
                     .build();
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("http://localhost:5173/success"))
+                .location(URI.create(FRONT_END_BASE_URL+"?status=success"))
                 .build();
     }
 
+        
 }
