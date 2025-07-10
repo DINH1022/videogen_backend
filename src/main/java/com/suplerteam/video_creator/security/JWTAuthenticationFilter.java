@@ -2,6 +2,7 @@ package com.suplerteam.video_creator.security;
 
 import com.suplerteam.video_creator.service.JWTService;
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,11 +53,20 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 
+    private void handleTokenExpired(HttpServletRequest req,
+                                    HttpServletResponse res,
+                                    FilterChain filterChain) throws IOException {
+        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        res.setContentType("application/json");
+        res.getWriter().write("{\"success\":\"false\", \"error\": \"Token has expired.\"}");
+        res.getWriter().flush();
+    }
     private void handleAuthenticate(HttpServletRequest req,
                                     HttpServletResponse res,
                                     FilterChain filterChain) throws ServletException, IOException {
         final String jwt=getToken(req);
         if(jwtService.isTokenExpired(jwt)){
+            handleTokenExpired(req,res,filterChain);
             return;
         }
         final String username=jwtService.extractUsername(jwt);
@@ -83,7 +93,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         catch (ExpiredJwtException ex){
             //log error
             System.out.println(ex.getMessage());
-            filterChain.doFilter(request,response);
+            handleTokenExpired(request,response,filterChain);
         }
         catch (Exception ex){
             throw ex;

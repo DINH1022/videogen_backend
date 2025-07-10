@@ -34,11 +34,6 @@ public class home {
     ResponseEntity<String> home(
             @RequestParam(name = "text")String text
     ) throws IOException, InterruptedException {
-        GenerateTextRequest request=GenerateTextRequest
-                .builder()
-                .prompt(text)
-                .build();
-        String res=textAIService.generateContent(request);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok("Good day");
     }
 }
