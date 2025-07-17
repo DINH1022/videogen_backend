@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 @Qualifier("tiktok-uploader-Service")
 public class TiktokUploaderClientImpl implements VideoUploaderClient {
     private static final Logger logger = LoggerFactory.getLogger(TiktokUploaderClientImpl.class);
-    private static final int CHUNK_SIZE = 10 * 1024 * 1024; // 10 MB per chunk
+    private static final int CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB per chunk
 
     @Autowired
     private UserRepository userRepository;
@@ -77,13 +77,28 @@ public class TiktokUploaderClientImpl implements VideoUploaderClient {
             logger.info("Retrieved creator info: {}", creatorInfo);
 
             // Step 3: Initialize upload
-            JsonNode initResponse = initializeVideoUpload(accessToken, videoBytes.length, req, creatorInfo);
+            int videoSize = videoBytes.length;
+            int chunkSize = CHUNK_SIZE;
+            int totalChunks;
+            int remaining = videoSize % chunkSize;
+
+            if (remaining > 0 && remaining < 5 * 1024 * 1024) {
+                totalChunks = videoSize / chunkSize; // gộp vào chunk cuối
+            } else {
+                totalChunks = (int) Math.ceil((double) videoSize / chunkSize);
+            }
+
+            JsonNode initResponse = initializeVideoUpload(accessToken, videoSize, chunkSize, totalChunks, req, creatorInfo);
+
             String publishId = initResponse.path("data").path("publish_id").asText();
             String uploadUrl = initResponse.path("data").path("upload_url").asText();
             logger.info("Upload initialized with publish ID: {} and URL: {}", publishId, uploadUrl);
 
+
+            //int totalChunksForUpload = (int) Math.ceil((double) videoSize / chunkSize);
             // Step 4: Upload video (potentially in chunks)
-            uploadVideoChunked(uploadUrl, videoBytes);
+            uploadVideoChunked(uploadUrl, videoBytes, chunkSize, totalChunks);
+
             logger.info("Video uploaded to TikTok successfully");
 
             // Step 5: Check upload status
@@ -198,13 +213,11 @@ public class TiktokUploaderClientImpl implements VideoUploaderClient {
         }
     }
 
-    private JsonNode initializeVideoUpload(String accessToken, int videoSize, SocialVideoUploadRequest req, JsonNode creatorInfo) {
-        logger.info("Initializing TikTok video upload with size: {}", videoSize);
+    private JsonNode initializeVideoUpload(String accessToken, int videoSize, int chunkSize, int totalChunks, SocialVideoUploadRequest req, JsonNode creatorInfo){
+     logger.info("Initializing TikTok video upload with size: {}", videoSize);
 
         try {
-            // Calculate chunk size and count properly
-            int chunkSize = Math.min(videoSize, CHUNK_SIZE);
-            int totalChunks = (int) Math.ceil((double) videoSize / chunkSize);
+
 
             logger.debug("Using chunk size: {}, total chunks: {}", chunkSize, totalChunks);
 
@@ -278,20 +291,27 @@ public class TiktokUploaderClientImpl implements VideoUploaderClient {
         }
     }
 
-    private void uploadVideoChunked(String uploadUrl, byte[] videoData) throws IOException, InterruptedException {
+    private void uploadVideoChunked(String uploadUrl, byte[] videoData, int chunkSize, int totalChunks)
+    throws IOException, InterruptedException {
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(60))
                 .build();
 
         int videoSize = videoData.length;
-        int chunkSize = Math.min(videoSize, CHUNK_SIZE);
-        int totalChunks = (int) Math.ceil((double) videoSize / chunkSize);
+
 
         logger.info("Starting chunked upload: {} bytes in {} chunks to URL: {}", videoSize, totalChunks, uploadUrl);
 
         for (int chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
             int startByte = chunkNumber * chunkSize;
-            int endByte = Math.min(startByte + chunkSize - 1, videoSize - 1);
+            int endByte;
+
+            if (chunkNumber == totalChunks - 1) {
+                endByte = videoSize - 1;
+            } else {
+                endByte = startByte + chunkSize - 1;
+            }
+
             int currentChunkSize = endByte - startByte + 1;
 
             byte[] chunk = new byte[currentChunkSize];
@@ -311,11 +331,10 @@ public class TiktokUploaderClientImpl implements VideoUploaderClient {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() != 200 && response.statusCode() != 201 && response.statusCode() != 202) {
+            if (response.statusCode() != 200 && response.statusCode() != 201 && response.statusCode() != 202 && response.statusCode() != 206) {
                 logger.error("Failed to upload chunk {} of {}. Status: {}, Body: {}",
                         chunkNumber + 1, totalChunks, response.statusCode(), response.body());
-                throw new IOException("Failed to upload video chunk " + (chunkNumber + 1) +
-                        ". Status: " + response.statusCode() + ", Body: " + response.body());
+                throw new IOException("Failed to upload video chunk " + (chunkNumber + 1) + ". Status: " + response.statusCode() + ", Body: " + response.body());
             }
 
             logger.info("Uploaded chunk {} of {} successfully", chunkNumber + 1, totalChunks);
