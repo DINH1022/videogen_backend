@@ -1,6 +1,7 @@
 package com.suplerteam.video_creator.controller;
 
 import com.suplerteam.video_creator.DTO.UserDTO;
+import com.suplerteam.video_creator.exception.ResourceNotFoundException;
 import com.suplerteam.video_creator.request.auth.LoginRequest;
 import com.suplerteam.video_creator.request.auth.RegisterRequest;
 import com.suplerteam.video_creator.service.JWTService;
@@ -54,7 +55,7 @@ public class AuthenticationController {
         
         // Get additional user info to include in token
         User user = userRepository.findByUsername(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         UserDTO userDTO = UserDTO.createFromEntity(user);
 
