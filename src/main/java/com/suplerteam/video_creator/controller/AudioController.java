@@ -31,7 +31,7 @@ public class AudioController {
     @Autowired
     private AudioStorageService audioStorageService;
 
-    @GetMapping("/generate")
+    @PostMapping("/generate")
     public ResponseEntity<String> textToSpeech (@RequestBody TextToSpeechRequest request)
             throws InterruptedException, IOException {
         InputStreamResource audioResource = audioService.textToSpeech(request);
