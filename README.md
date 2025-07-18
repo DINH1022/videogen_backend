@@ -3,9 +3,11 @@
 🎬 **VideoGen** is an AI-powered backend system designed to automate video creation from text input. It provides a set of robust APIs that allow users to generate, edit, and manage personalized videos directly from the web.
 
 ---
-> **Watch Demo Video**: [![Watch the video](https://img.youtube.com/vi/gNZZTNs1kNo/0.jpg)](https://www.youtube.com/watch?v=gNZZTNs1kNo)
+>**Watch Demo Video**:
 
-> 👉 Frontend Repository: [https://github.com/DINH1022/videogen_frontend](https://github.com/DINH1022/videogen_frontend)
+[![Watch the video](https://img.youtube.com/vi/gNZZTNs1kNo/0.jpg)](https://www.youtube.com/watch?v=gNZZTNs1kNo)
+
+> **Frontend Repository**: [https://github.com/DINH1022/videogen_frontend](https://github.com/DINH1022/videogen_frontend)
 ---
 
 ## 🚀 Key Features
